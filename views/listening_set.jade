@@ -1,0 +1,117 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.min.js")
+    
+    script(src= "https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js")  
+    script(src="https://cdn.datatables.net/1.10.11/js/dataTables.bootstrap.min.js")
+    link(rel='stylesheet' type ='text/css' href='//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.11/css/dataTables.bootstrap.min.css')
+
+
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")      
+
+
+  body
+    include ./header.jade
+    div(class="alert alert-success" id="delete-alert")
+      strong  문제가 성공적으로 삭제됬습니다. 
+    table(id="table" class="table table-striped table-bordered" cellspacing="0" width="100%")
+      thead
+        tr
+          th 문제 번호
+          th 문제 설명
+          th 문제 갯수
+          th 생성 일자
+          th 오디오 파일
+          th action 
+      tfoot
+        
+        tr
+          th
+            a(href="/listening/set/new")
+              button(type="button" class="btn btn-info" style="float: right;") 문제집생성
+
+      - var n = 1
+      tbody
+        each questionset in l_questionsets
+          tr
+            
+            td=n++ 
+            td=questionset.l_questionset_name
+            td=questionset.l_questionset_count
+            td=questionset.l_questionset_date
+            td
+              audio(controls preload="none")
+                source(src=questionset.l_questionset_audiopath type="audio/ogg")
+            td
+              a(href='/listening/set/'+questionset.l_questionset_id)
+                button(type="button" class="btn btn-primary") 문제관리
+              button(type="button" id="dbutton" class="btn btn-danger" data-toggle="modal" data-target="#myModal" data-id= "#{JSON.stringify(questionset.l_questionset_id)}") 삭제
+              div(id="myModal" class="modal fade" role="dialog")
+                div(class="modal-dialog")
+                  div(class="modal-content")
+                    div(class="modal-header")
+                      button(type="button" class="close" data-dismiss="modal") &times;
+                      h4(class="modal-title") 문제 삭제      
+                    div(class="modal-body")
+                      p 문제를 삭제하시겠습니까?    
+                    div(class="modal-footer")
+                      button(type="button"  data-dismiss="modal") 취소
+                      button(type="button"  id = "dele" data-dismiss="modal" ) 삭제
+          
+
+  
+  script.
+    $(document).ready(function() {
+        
+      table = $('#table').DataTable({      
+      "scrollY": "630px",
+      "scrollCollapse": true,
+      "paging": false      
+      });
+      
+      
+
+      
+      
+    
+    $(document).on("click", "#dbutton", function () {
+      var proId = $(this).data('id');
+        var one = document.getElementById('dele')
+        one.addEventListener('click', function(){
+          removeItem(proId);
+  
+        })
+      });
+      
+    function removeItem(id) {
+      $.ajax({
+      url:'/listening/set/delete',  
+      type:"post",
+      data: '&id='+id,
+      success:function(data) {
+          var $dom = $(document.createElement("html"));
+          $dom[0].innerHTML = data;
+
+          var $body = $dom.find("body");
+          $('body').html($body[0].innerHTML);
+          $("#delete-alert").css({'display':'block'});
+
+
+          $("#delete-alert").fadeTo(2000, 1300).slideUp(1300, function(){
+            $("#delete-alert").css({'display':'none'});
+          });
+        }
+      });
+    }
+    
+    })
+
+
+    
+    
