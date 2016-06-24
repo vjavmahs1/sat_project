@@ -1,0 +1,58 @@
+#makeset{
+  margin-bottom: 15px;
+}
+
+#produce-alert{
+  display: none;
+}
+
+
+#edit-alert{
+  display: none;
+}
+
+#delete-alert{
+  display: none;
+}
+
+td.details-control {
+   background: url('http://www.datatables.net/examples/resources/details_open.png') no-repeat center center;
+   cursor: pointer;
+}
+tr.shown td.details-control {
+   background: url('http://www.datatables.net/examples/resources/details_close.png') no-repeat center center;
+}
+
+
+#text{
+  width: 100%;
+  height: 220px;
+  overflow-y: scroll;
+  border-color: grey;
+  border-width: 2px;
+  padding: 2px;
+  font-size: 12px;
+}
+
+.well.problem{
+  height: 20px;
+  border-color: grey;
+  border-width: 2px;
+  padding: 2px;
+  font-size: 12px;
+}
+
+#examBack{
+  background:white;
+
+}
+
+#nameBack{
+  height: 100px;
+
+}
+.examBtn{
+  margin-left: 8px;
+  margin-top: 33px;
+  float: right;
+}

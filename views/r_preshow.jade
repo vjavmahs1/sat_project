@@ -1,0 +1,18 @@
+doctype html
+html
+  label 문제
+  div(class="well well-sm problem")=question.r_question_topic
+  label 본문
+  br
+  textarea(class="well well-lg" readonly id="text")=question.r_question_text
+  br
+  label 보기
+  div(class="well well-sm problem")=question.r_question_asw1
+  div(class="well well-sm problem")=question.r_question_asw2
+  div(class="well well-sm problem")=question.r_question_asw3
+  div(class="well well-sm problem")=question.r_question_asw4
+  div(class="well well-sm problem")=question.r_question_asw5
+  label 정답
+  br
+  select(class="selectpicker")
+    option(value=question.r_question_solution selected)=question.r_question_solution+"번"

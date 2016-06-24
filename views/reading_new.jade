@@ -1,0 +1,130 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    // lastest jquery
+    script(src="//code.jquery.com/jquery-1.12.3.min.js")
+
+
+    
+    //collapse bootstrap
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    //sortable script
+    script(src="//code.jquery.com/ui/1.11.4/jquery-ui.js")
+    
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+    
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_promake.style.css')
+    
+  body
+    include ./header.jade    
+    div(class="alert alert-success" id="produce-alert") 
+      strong  문제가 성공적으로 생성됬습니다. 
+    div(class="well well-lg")
+    
+      form(role ="form" action='/reading/new' method="POST" id ="target")
+        div(class="row-fluid")
+          fieldset(class="form-group")
+            select(name="r_questiontype_id" class="selectpicker drop" id="questionType0" required)
+              option(value="" selected disabled) 문제유형을 선택하세요
+              each r_questiontype in r_questiontypes
+                option(value =r_questiontype.r_questiontype_id id="opt")=r_questiontype.r_questiontype_type 
+          fieldset(class="form-group")
+            label 문제
+            input(class="form-control" id="ex3" name="r_question_topic" placeholder="문제를 입력해주세요" type="text" required)
+            
+          fieldset(class="form-group")
+            label 본문
+            textarea(name = "r_question_text" id="explain" placeholder="설명 :" class="form-control" rows="7")
+
+  
+          
+          fieldset(class="form-group")
+            label 보기 입력
+            br
+            ul(class="sortable")
+              li
+                input(type = "text" name = "r_question_asw1" class="form-control" id="ex3" placeholder="보기 :" required)
+              li
+                input(type = "text" name = "r_question_asw2" class="form-control" id="ex3" placeholder="보기 :" required)
+              li
+                input(type = "text" name = "r_question_asw3" class="form-control" id="ex3" placeholder="보기 :" required)
+              li
+                input(type = "text" name = "r_question_asw4" class="form-control" id="ex3" placeholder="보기 :" required)
+              li
+                input(type = "text" name = "r_question_asw5" class="form-control" id="ex3" placeholder="보기 :" required)
+            label 정답
+            select(name="r_question_solution" class="selectpicker" required)
+              option(value="" selected disabled) 정답을 선택하세요
+              option(value="1") 1
+              option(value="2") 2
+              option(value="3") 3
+              option(value="4") 4
+              option(value="5") 5
+          fieldset(class="form-group")
+            label 설명
+            textarea(name = "r_question_explain" id="explain" placeholder="설명 :" class="form-control" rows="7")
+            
+        input(type="submit" class="btn btn-info" value="문제 생성")
+        
+        button(type="button" class="btn btn-success" id="back") 나가기
+        
+        br
+        br
+    script.
+      //리딩문제 생성시 보기 sortable로 바꿔주는 함수
+      $(".sortable").sortable({
+        stop: function(event, ui){
+            var cnt = 1;
+            $(this).children('li').each(function(){
+                $(this).children('input:first').attr('name', "r_question_asw"+cnt+"");
+                cnt++;
+                });
+            }
+      });
+      
+      //리딩 문제 생성 ajax함수
+      $("#target").submit(function(e){
+        var url = "new"
+        var formData = new FormData($(this)[0]);
+        console.log(formData);
+        $.ajax({
+          type : "POST",
+          data: $("#target").serialize(),
+          url : url,
+          success : function(data)
+          {
+            console.log(data);
+            var $dom = $(document.createElement("html"));
+            $dom[0].innerHTML = data;
+
+            var $body = $dom.find("body");
+            $('body').html($body[0].innerHTML);
+            $('.selectpicker').selectpicker('render').selectpicker('refresh');
+
+            
+            $("#produce-alert").fadeTo(2000, 1300).slideUp(1300, function(){
+              $("#produce-alert").css({'display':'none'});
+              
+              
+            });          
+          }
+        })
+        e.preventDefault(); // avoid to execute the actual submit of the form.
+
+      })
+      
+      //리딩문제 생성에서 뒤로가기 누르면 reading리스트 화면으로 가는 함수
+      $("#back").click(function(e){
+           window.location.href = "/reading";
+      })
+      
+
+      
+
+    

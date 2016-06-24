@@ -1,0 +1,159 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+  
+    //datatables    
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")   
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+
+    
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")      
+
+
+  body
+    include ./header.jade
+    div(class="alert alert-success" id="delete-alert")
+      strong  문제가 성공적으로 삭제됬습니다.
+    div(class="well well-lg")  
+      table(id="table" class="display nowrap" cellspacing="0" width="100%")
+        thead
+          tr
+            th 문제 번호
+            th 문제 보기
+            th 문제 유형
+            th 생성 일자
+            th action
+        tfoot      
+          tr
+            th
+              a(href="/reading/new")
+                button(type="button" class="btn btn-info" id="makeset" style="float: right;") 문제생성
+        - var n = 1
+        tbody
+          each question in r_questions
+            tr(data-child-question=question)
+              td=n++
+              td(class="details-control")
+              td=question.r_questiontype_type
+              td=question.r_question_date
+              td
+                a(href='/reading/'+question.r_question_id+'/edit')
+                  button(type="button" class="btn btn-primary btn-sm") 문제수정
+                button(type="button" id="dbutton" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal" data-id= "#{JSON.stringify(question.r_question_id)}") 삭제
+                div(id="myModal" class="modal fade" role="dialog")
+                  div(class="modal-dialog")
+                    div(class="modal-content")
+                      div(class="modal-header")
+                        button(type="button" class="close" data-dismiss="modal") &times;
+                        h4(class="modal-title") 문제 삭제      
+                      div(class="modal-body")
+                        p 문제를 삭제하시겠습니까?    
+                      div(class="modal-footer")
+                        button(type="button"  data-dismiss="modal") 취소
+                        button(type="button"  id = "dele" data-dismiss="modal" ) 삭제
+        
+          
+            
+
+              
+            
+                      
+    script. 
+      //리딩문제 보기 함수 
+      function format(question) {
+        var questionId = question.r_question_id
+        $.ajax({
+          url:'reading/'+questionId+'/preshow',
+          type : "GET",
+          async: false,  
+          data: questionId,
+          success: function(data){
+
+             result = data;
+              
+          }
+        })
+        return result;  
+        
+      }
+      
+      // 데이터테이블 생성 및 구성      
+      $(document).ready(function () {
+      var table = $('#table').DataTable({
+        "scrollY": "780px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "width" : "80%"
+          
+      });
+
+      // Add event listener for opening and closing details
+      $('#table').on('click', 'td.details-control', function () {
+          var tr = $(this).closest('tr');
+          var row = table.row(tr);
+
+          if (row.child.isShown()) {
+              // This row is already open - close it
+              row.child.hide();
+              tr.removeClass('shown');
+          } else {
+              // Open this row
+              row.child(format(tr.data('child-question'))).show();
+              $('.selectpicker').selectpicker('render').selectpicker('refresh');
+              tr.addClass('shown');
+            }
+          });
+      });
+        
+      // 리딩문제 삭제하는 함수
+      $(document).on("click", "#dbutton", function () {
+        var proId = $(this).data('id');
+          var one = document.getElementById('dele')
+          one.addEventListener('click', function(){
+            removeItem(proId);
+    
+          })
+        });
+        
+      function removeItem(id) {
+        $.ajax({
+        url:'reading/'+id+'/delete',  
+        type:"post",
+        data: id,
+        success:function(data) {
+            var $dom = $(document.createElement("html"));
+            $dom[0].innerHTML = data;
+
+            var $body = $dom.find("body");
+            $('body').html($body[0].innerHTML);
+            $("#delete-alert").css({'display':'block'});
+
+
+            $("#delete-alert").fadeTo(2000, 1300).slideUp(500, function(){
+              $("#delete-alert").css({'display':'none'});
+
+
+            });
+            
+
+          
+          
+          }
+        });
+      }
+      
+      
+                    
+                    
+     

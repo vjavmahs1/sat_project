@@ -1,0 +1,66 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    script(src="//code.jquery.com/jquery-1.12.3.min.js")    
+    link(rel='stylesheet' type ='text/css' href='/css/listening_promake.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+
+
+  body
+    include ./header.jade
+
+    div(class="well well-lg")  
+      form(role ="form" action='/listening/set/edit/'+l_questionset.l_questionset_id method="POST"  id = "target" enctype="multipart/form-data" data-id = l_questionset.l_questionset_id)
+        fieldset(class="form-group")
+          label 문제집 설명
+          input(type="text" class="form-control" name = "l_questionset_name" id="ex3" placeholder="Example input" value = l_questionset.l_questionset_name)
+        fieldset(class="form-group")
+          label 오디오 파일
+          input(type="file" class="form-control-file" name="l_userfile_audio" id="audio_file" accept="audio/*	" onchange="playFile(this)") 
+          audio(controls id="audio_play")
+            source(src=l_questionset.l_questionset_audiopath)
+            
+            input(type="" value="확인" id="produce")
+            input(id="questionsset_id" type="hidden" name="l_questionset_id" value=l_questionset.l_questionset_id)      
+          input(type="submit" value="확인" id="produce")
+          button(id="dbutton" data-id = l_questionset.l_questionset_id) 취소  
+  
+
+  script.
+      function playFile(obj) {
+        var sound = document.getElementById('audio_play');
+        var reader = new FileReader();
+        reader.onload = (function(audio) {return function(e) {audio.src = e.target.result;};})(sound);
+        reader.addEventListener('load', function() {
+      });
+        reader.readAsDataURL(obj.files[0]);
+      }
+      
+      $(document).on('click', "#dbutton", function(e){
+        e.preventDefault(); // avoid to execute the actual submit of the form.
+        var setId = $(this).data('id');
+        window.location.replace('/listening/set/'+setId)
+      })
+      
+      $("#target").submit(function(e) {
+        var formData = new FormData($(this)[0]);
+        var setId = $(this).data('id');
+          $.ajax({
+                 type: "POST",
+                 url: "/listening/set/edit/"+setId,
+                 data: formData, // serializes the form's elements.
+                 dataType: "json",
+                 cache: false,
+                 contentType: false,
+                 processData: false,
+                 success: function(data)
+                 {
+                   window.location.href = "/listening/set/"+data;
+
+                 }
+               });
+
+          e.preventDefault(); // avoid to execute the actual submit of the form.
+      });
