@@ -2,10 +2,65 @@ header
   a(href="/reading")
     img(alt='학교로고' width='200' height='100')
     img(src="http://tech1650.dothome.co.kr/wp-content/uploads/2014/11/%EC%9D%B4%EB%AF%B8%EC%A7%80%EB%B3%B4%EC%B9%B44.png" alt="회사로고" width="300" height="90" id="logo")
+  if(SESSIONUSER)
+    -var name = SESSIONUSER.name 
+    -var email = SESSIONUSER.email
+    ul.nav.navbar-nav.navbar-right#user
+      li.dropdown
+          a.dropdown-toggle(href='#', data-toggle='dropdown')
+            span.glyphicon.glyphicon-user
+            |                       
+            strong=name
+            |                         
+            span.glyphicon.glyphicon-chevron-down
+          |                     
+          ul.dropdown-menu
+            li
+              .navbar-login
+                .row
+                  .col-lg-4
+                    p.text-center
+                      span.glyphicon.glyphicon-user.icon-size
+                  |                                     
+                  .col-lg-8
+                    p.text-left
+                      
+                      
+                      strong=name
+                    |                                         
+                    p.text-left.small=email
+                    |                                         
+                    p.text-left
+                      a.btn.btn-primary.btn-block.btn-sm(href='#') Profile
+            |                         
+            li.divider.navbar-login-session-bg
+            |                         
+            li.navbar-login-session-bg
+              .navbar-login.navbar-login-session
+                .row
+                  .col-lg-12
+                    p
+                      a#logout.btn.btn-danger.btn-block(href='#') Logout
+                        script.
+                          $("#logout").on("click",function(e){
+                            $.ajax({
+                              url: 'logout',
+                              type: "POST",
+                              success: function(data) {
+                                  console.log(data);
+                                  location.replace(data);
+                                
+                                
+                              }
+                            })
+                            e.preventDefault();
+
+                            
+                          })
   div(id = "wrap")
     ul(id="nav")
       li
-        a(href="#") 학생 관리
+        a(href="/admin") 기관 관리
       li
         a(href="#") 문제 관리
           ul
@@ -33,3 +88,4 @@ header
 
       li
         a(href="#") 점수 관리
+        

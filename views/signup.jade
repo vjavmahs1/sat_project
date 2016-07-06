@@ -1,0 +1,193 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    
+    //validate 기본
+    script(src ="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js")
+    //validate 외부 addMethod가져오기
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/additional-methods.min.js")
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+
+    
+  body
+    div(class="modal-dialog")
+      div(class="modal-content")    
+        div(class="modal-header")
+          h2 회원가입
+        div(class="modal-body")  
+          form(role="form" action='/signup' id="signUp" method="POST")
+              
+            div(class="form-group")
+              label(for="email" class="control-label") Email
+              input(type ="email" class="form-control" id="email" placeholder="Email" name = "email")
+                
+            div(class="form-group")
+              label(for="password" class="control-label") Password
+              input(input type="password" class="form-control" id="password"  name="password" placeholder="Password")
+                
+            div(class="form-group")
+              input(type="password" class="form-control" id="PasswordConfirm" name="passwordconfirm" placeholder="Confirm")
+              
+            div(class="form-group")
+              label 인증코드 정보
+              input(type="text" class="form-control" placeholder="학교" required value= serialInfo.school_name readonly)
+              input(type="hidden" name="schoolId" value=serialInfo.school_id)
+  
+            div(class="form-group")  
+              input(type="text" class="form-control" placeholder="직책" id="role" required value= serialInfo.name readonly)
+              input(type="hidden" name="roleId" value=serialInfo.role_id)  
+
+              
+            div(class="form-group")
+              label(for="name" class="control-label") 이름                  
+              input(type="text" class="form-control" id="name" name="userName" placeholder="이름")
+              input(type="hidden" name="serialId" value=serialInfo.serial_id)  
+
+            if(serialInfo.role_id == 2)
+              div(class= "form-group") 
+                select(name="grade" class="selectpicker" title="학년")
+                  -var i=1
+                  while i<7
+                    option(value=i)= i++  
+              div(class= "form-group")                       
+                select(name="classroom" class="selectpicker" title="반")
+                  -var i=1
+                  while i<20
+                    option(value=i)= i++
+                    
+              div(class="form-group")
+               select(name="teachers" class="selectpicker" multiple="multiple" title="선생님을 선택해주세요" data-width="100%") 
+                 each teacher in teachers
+                   -var teacherInfo = teacher.name+"(" + teacher.personal_id + ")"
+                   option(value=teacher.user_id)=teacherInfo
+            else
+              div(class="form-group")
+                label(for="grade" class="control-label") 선생님 설명                  
+                input(type="text" class="form-control" name="role" placeholder="예: 3학년 2반 담당")
+                       
+    
+      
+                  
+  
+              
+            div(class="form-group")
+              button(type="submit" class="btn btn-primary") 확인
+                
+    script.
+  
+      $(document).ready(function(){
+        
+        $.validator.setDefaults({
+          errorClass: 'help-block',
+          highlight: function(element){  //validate 에러 발생했을때 highlight
+            $(element)
+              .closest('.form-group')
+              .addClass('has-error')
+          },
+          unhighlight: function(element){ //validate 에러 해결됬을때 unhighlight
+            $(element)
+              .closest('.form-group')
+              .removeClass('has-error')
+            }
+        })
+        
+        $.validator.addMethod('strongPassword', function(value, element){ //creating own validating method
+          return this.optional(element)
+            || value.length >= 6
+            && /\d/.test(value)
+            && /[a-z]/i.test(value);
+        },  'your password must be at least 6 characters long and contain at least one number and on char\.')
+        
+        $("#signUp").validate({
+          rules: {
+            email: {
+              required: true,
+              email: true,
+              remote: {
+                type: "POST",
+                url: "/email/check"
+              }
+            },
+            password : {
+              required: true,
+              strongPassword : true
+            },
+            passwordconfirm : {
+              required: true,
+              equalTo: "#password"
+            },
+            userName: {
+              required : true  
+            },
+            grade: {
+              required : true
+            },
+            classroom: {
+              required : true
+            },
+            grade: {
+              required : true
+            },
+            classroom:{
+              required : true
+            },
+            teachers: {
+              required : true
+            }
+          },
+          messages: {
+            email: {
+              required: "이메일 주소를 반드시 입력해 주세요.",
+              email: "올바른 이메일 주소 형식이 아닙니다.",
+              remote : "해당 이메일 주소는 이미 사용중입니다."
+            },
+            password: {
+              required: "비밀번호를 반드시 입력해 주세요.",
+            },
+            passwordconfirm : {
+              required: "비밀번호를 다시한번 입력해주세요.",
+              equalTo:  "비밀번호가 일치하지 않습니다."
+            },
+            userName: {
+              required : "이름을 입력해 주세요."
+            },
+            grade : {
+              required: "학년을 선택해주세요"
+            },
+            
+            classroom : {
+              required : "반을 선택해주세요"
+            },    
+            teachers : {
+              required : "한명 이상의 선생님을 선택해주세요"
+            }
+          }
+        })
+        
+        $(function(){
+          var role = $("#role").val()
+          if(role !="student"){
+            
+          }
+        })
+
+        
+      })
+  
+                
+              
+
+
+
+    

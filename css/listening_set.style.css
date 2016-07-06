@@ -15,6 +15,11 @@
   display: none;
 }
 
+#codeAlert{
+  display: none;
+}
+
+
 td.details-control {
    background: url('http://www.datatables.net/examples/resources/details_open.png') no-repeat center center;
    cursor: pointer;
@@ -54,5 +59,23 @@ tr.shown td.details-control {
 .examBtn{
   margin-left: 8px;
   margin-top: 33px;
+  float: right;
+}
+
+.navbar-login
+{
+    width: 305px;
+    padding: 10px;
+    padding-bottom: 0px;
+}
+
+.navbar-login-session
+{
+    padding: 10px;
+    padding-bottom: 0px;
+    padding-top: 0px;
+
+}
+#user{
   float: right;
 }

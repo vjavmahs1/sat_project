@@ -1,0 +1,73 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    
+    //validate 기본
+    script(src ="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js")
+    //validate 외부 addMethod가져오기
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/additional-methods.min.js")
+
+    
+    
+  body
+    div(class="modal-dialog")
+      div(class="modal-content")    
+        div(class="modal-header")
+          h2 회원 학교 인증                      
+        div(class="modal-body")
+          div(class="alert alert-danger display-hide" id="codeAlert")
+            a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+            strong  올바르지 않은 인증 코드입니다. 
+          p 솔루션 가입에 필요한 인증 코드를 입력해 주세요.
+          p (인증 코드가 없으실 경우 고객 센터로 연락해 주세요)
+          form(class="form" action='/auth' method="POST" id = "auth")
+            div(class="form-group")
+              input(type="text" class="form-control input-lg" placeholder="인증코드" id="serial" required autofocus name ="serialNumber")
+        
+        div(class="modal-footer")
+          span(class="pull-left")
+            button(class="btn btn-lg btn-default") 취소 
+          span
+            button(class="btn btn-lg btn-success" id = "submitBt") 인증
+    script.
+      $(document).ready(function(){
+        $("#submitBt").on('click', function(){
+          $("#auth").submit();
+        })
+        
+        $("#auth").on("submit", function(e){
+          var serialNumber = $("#serial").val()
+          console.log(serialNumber);
+          var formURL = $(this).attr("action")
+          
+          $.ajax({
+            url: formURL,
+            type: "POST",
+            data: {serialNumber},
+            success: function(data) {
+              if(data =="/auth"){
+                $('#codeAlert').css({'display':'block'})
+              }else{
+                location.replace(data);
+              }
+            }
+          })
+          e.preventDefault();
+ 
+        })
+        
+        
+        
+        
+      })
+              
+              

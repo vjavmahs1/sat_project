@@ -119,6 +119,7 @@ html
             url: '/listening/exam/'+examId+'/problem',
             data: {questionId},
             success: function(data){
+              console.log(data);
               var $dom = $(document.createElement("html"));
               $dom[0].innerHTML = data;
               

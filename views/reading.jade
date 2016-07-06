@@ -70,6 +70,7 @@ html
             
                       
     script. 
+      $(document).ready(function () {
       //리딩문제 보기 함수 
       function format(question) {
         var questionId = question.r_question_id
@@ -89,7 +90,6 @@ html
       }
       
       // 데이터테이블 생성 및 구성      
-      $(document).ready(function () {
       var table = $('#table').DataTable({
         "scrollY": "780px",
         "scrollCollapse": true,

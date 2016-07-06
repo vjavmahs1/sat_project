@@ -1,0 +1,190 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+  
+    //datatables    
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+    
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    
+  body
+    include ./header.jade
+    div(class="well well-lg" style="background-color: white;")
+      table(id="table" class="display nowrap" cellspacing="0" width="100%")
+        thead
+          tr
+            th 아이디
+            th 이름
+            th GRADE
+            th 기관 타입
+            th 관리자 시리얼 번호
+            th 선생님 시리얼 번호
+            th 학생 시리얼 번호
+            th action
+        tfoot
+          tr
+            th
+              button(class = "btn btn-success" id = "newSchool" style="float: right;" data-toggle="modal" data-target="#myModal") 새로운 학교생성
+              div(id="myModal" class="modal fade"  role="dialog")
+                  div(class="modal-dialog")
+                    div(class="modal-content")
+                      div(class="modal-header")
+                        button(type="button" class="close" data-dismiss="modal") &times;
+                        h4(class="modal-title") 학교생성      
+                      div(class="modal-body")
+                        form(role ="form" action='/school' method="POST" id = "school")
+                          fieldset(class="form-group")
+                            label 학교 이름:
+                            input(type="text", name = "schoolName" class="form-control" required)
+                          div(class="form-group")
+                            label 기관 타입
+                            p
+                            select(name="type" class="selectpicker")
+                              option(value="school") SCHOOL
+                              option(value="PRIVATE_INSTITUTE") PRIVATE_INSTITUTE
+                          div(class="form-group")
+                            label Grade
+                            p
+                            select(name="grade" class="selectpicker")
+                              option(value="E") ELEM
+                              option(value="M") MIDDLE
+                              option(value="H") HIGH
+                               
+
+                          div(class="modal-footer")
+                            button(data-dismiss="modal" class= "btn btn-danger") 취소
+                            button(data-dismiss="modal" class ="btn btn-success" id="proSchool") 생성하기
+    
+        - var n = 1
+        tbody
+          each school in schools
+            tr
+              td=n
+              td=school.school_name
+              td=school.school_grade
+              td=school.school_type
+                each serial in serials
+                  if(serial.school_id == school.school_id && serial.role_id==1)
+                    - tcherSerial = serial.serial_number
+                  if(serial.school_id == school.school_id && serial.role_id==2)
+                    - studentSerial = serial.serial_number
+                  if(serial.school_id == school.school_id && serial.role_id ==3)
+                    - adminSerial = serial.serial_number      
+              td=adminSerial    
+              td=tcherSerial
+              td=studentSerial
+              - adminSerial = null
+              - tcherSerial = null
+              - studentSerial = null      
+      
+              td
+                button(id="dbutton" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#myModal"+n) 제품키 생성
+                div(id="myModal"+n class="modal fade" role="dialog")
+                    div(class="modal-dialog")
+                      div(class="modal-content")
+                        div(class="modal-header")
+                          button(type="button" class="close" data-dismiss="modal") &times;
+                          h4(class="modal-title") 제품키 생성      
+                        div(class="modal-body")
+                          form(role ="form" action='/serial' method="POST" id ="serialForm"+n class="serialForm" data-id = school.school_id)
+                            fieldset(class="form-group")
+                              label role:
+                                select(name="role" class="selectpicker")
+                                  option(value=2) 학생
+                                  option(value=1) 선생님
+                                  option(value=3) 관리자
+                            div(class="modal-footer")
+                              button(type="button"  data-dismiss="modal" class= "btn btn-danger") 취소
+                              button( data-dismiss="modal" class ="btn btn-success serialPro" data-n =n++) 생성하기
+    script.
+      $(document).ready(function () {
+        var table = $('#table').DataTable({
+          "scrollY": "780px",
+          "scrollCollapse": true,
+          "paging": true, 
+          "pagingType": "full_numbers"
+            
+          });
+          
+          $(".serialForm").each(function(){
+            $(this).on('submit', function(e){
+              var postData = $(this).serializeArray();
+              var postData = postData[0].value
+              var formURL = $(this).attr("action");
+              var schoolId = $(this).data('id');
+              console.log(schoolId);
+              $.ajax({
+                  url: formURL,
+                  type: "POST",
+                  data: {postData, schoolId},
+                  success: function(data) {
+                    var $dom = $(document.createElement("html"));
+                    $dom[0].innerHTML = data;
+                    
+                    var $body = $dom.find("body");
+                    $('body').html($body[0].innerHTML);
+                    $('.selectpicker').selectpicker('render').selectpicker('refresh');
+
+
+                  }
+                })
+              e.preventDefault();
+            })
+          })
+        
+        $("#school").on('submit', function(e){
+          var postData = $(this).serializeArray();
+          var schoolName = postData[0].value
+          var type = postData[1].value
+          var grade = postData[2].value
+          var formURL = $(this).attr("action");
+        
+          $.ajax({
+            url: formURL,
+            type: "POST",
+            data: {schoolName, type, grade},
+            success: function(data) {
+              var $dom = $(document.createElement("html"));
+              $dom[0].innerHTML = data;
+              
+              var $body = $dom.find("body");
+              $('body').html($body[0].innerHTML);
+              $('.selectpicker').selectpicker('render').selectpicker('refresh');
+
+            }
+          })
+          e.preventDefault();
+
+        })  
+
+        $("#proSchool").on('click', function(){
+          $("#school").submit();
+        })
+        
+        $(".serialPro").each(function(){
+          $(this).on('click', function(e){
+            var n = $(this).data('n');
+            console.log(n);
+            $("#serialForm"+n).submit();
+
+          })
+        })
+        
+        
+          
+
+      });
+      
+        
