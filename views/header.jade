@@ -44,7 +44,7 @@ header
                         script.
                           $("#logout").on("click",function(e){
                             $.ajax({
-                              url: 'logout',
+                              url: '/logout',
                               type: "POST",
                               success: function(data) {
                                   console.log(data);
@@ -57,35 +57,62 @@ header
 
                             
                           })
+                          
   div(id = "wrap")
     ul(id="nav")
-      li
-        a(href="/admin") 기관 관리
-      li
-        a(href="#") 문제 관리
-          ul
-            li
-              a(href="/reading") Reading
-            li
-              a(href="/listening/set") Listening
+      if(SESSIONUSER.role_id == 4)
+        li
+          a(href="/admin") 기관 관리
+        li
+          a(href="#") 문제 관리
+            ul
+              li
+                a(href="/reading") Reading
+              li
+                a(href="/listening/set") Listening
 
-      li
-        a(href="#") 시험 관리
-          ul
-            li
-              a(href="/reading/exam") Reading
-            li
-              a(href="/listening/exam") Listening
-      li
-        a(href="#") 수행 평가
-          ul
-            li
-              a(href="#") #        
-            li
-              a(href="3") #
+        li
+          a(href="#") 시험 관리
+            ul
+              li
+                a(href="/reading/exam") Reading
+              li
+                a(href="/listening/exam") Listening
+        li
+          a(href="#") 수행 평가
+            ul
+              li
+                a(href="#") #        
+              li
+                a(href="3") #
 
 
 
-      li
-        a(href="#") 점수 관리
-        
+        li
+          a(href="#") 점수 관리
+      else if(SESSIONUSER.role_id == 1 || 3)
+        li
+          a(href="groups") 그룹 관리
+        li
+          a(href="#") 문제 관리
+            ul
+              li
+                a(href="/reading") Reading
+              li
+                a(href="/listening/set") Listening
+        li
+          a(href="#") 시험 관리
+            ul
+              li
+                a(href="/reading/exam") Reading
+              li
+                a(href="/listening/exam") Listening
+        li
+          a(href="#") 수행 평가
+            ul
+              li
+                a(href="#") #        
+              li
+                a(href="3") #
+        li
+          a(href="#") 점수 관리    

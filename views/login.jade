@@ -79,11 +79,11 @@ html
               url: $(form).attr("action"),
               data: $(form).serialize(),
               success: function(data){
-                if(data == "/reading"){
-                  location.replace(data);
+                if(data == "fail"){
+                  $('#codeAlert').css({'display':'block'})
                 }else{
                   console.log(data);
-                  $('#codeAlert').css({'display':'block'})
+                  window.location.href = data
                 }
 
 

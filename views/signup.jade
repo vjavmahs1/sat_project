@@ -56,18 +56,28 @@ html
 
             if(serialInfo.role_id == 2)
               div(class= "form-group") 
+                label(for="grade" class="control-label") 학년을 선택해주세요                                      
                 select(name="grade" class="selectpicker" title="학년")
                   -var i=1
                   while i<7
-                    option(value=i)= i++  
-              div(class= "form-group")                       
+                    option(value=i)= i++ +"학년"  
+              div(class= "form-group")
+                label(for="classroom" class="control-label")  반을 선택해주세요                                      
                 select(name="classroom" class="selectpicker" title="반")
                   -var i=1
-                  while i<20
-                    option(value=i)= i++
+                  while i<21
+                    option(value=i)= i++ +"반"
+              div(class= "form-group")
+                label(for="number" class="control-label") 번호를 선택해주세요                                      
+                select(name="number" class="selectpicker" title="번호")
+                  -var i=1
+                  while i<76
+                    option(value=i)= i++ +"번"     
+                    
                     
               div(class="form-group")
-               select(name="teachers" class="selectpicker" multiple="multiple" title="선생님을 선택해주세요" data-width="100%") 
+                label(for="grade" class="control-label") 선생님을 선택해주세요                  
+               select(name="teachers" class="selectpicker" multiple="multiple" title="선생님" data-width="100%") 
                  each teacher in teachers
                    -var teacherInfo = teacher.name+"(" + teacher.personal_id + ")"
                    option(value=teacher.user_id)=teacherInfo

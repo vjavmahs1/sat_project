@@ -21,6 +21,9 @@ html
     link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
     link(rel='stylesheet' type ='text/css' href='/css/listening_promake.style.css')
     
+    link(href="/multi-select/css/multi-select.css" rel="stylesheet" type="text/css")
+    script(src="/multi-select/js/jquery.multi-select.js")
+    
   body
     include ./header.jade    
     div(class="alert alert-success" id="produce-alert") 
@@ -69,14 +72,44 @@ html
           fieldset(class="form-group")
             label 설명
             textarea(name = "r_question_explain" id="explain" placeholder="설명 :" class="form-control" rows="7")
-            
+          
+          div(class-"form-group")
+            label 공개범위 설정
+            select(class="selectpicker" name="scope" id="scope")
+              option(value=1) 전체공개
+              option(value=2) 학교
+              option(value=3) 나만보기    
+              option(id=4 value="[]") 사용자 지정
+            br
+            br  
         input(type="submit" class="btn btn-info" value="문제 생성")
-        
         button(type="button" class="btn btn-success" id="back") 나가기
+        
+    div(id="myModal" class="modal fade" role="dialog")
+      div(class="modal-dialog")
+        div(class="modal-content")
+          div(class="modal-header")
+            button(type="button" class="close" data-dismiss="modal") &times;
+            h4(class="modal-title") 공개 범위 사용자 지정  
+          div(class="modal-body")
+            select(id='selectedStudnets' multiple='multiple' name ="studentId" class="multiSel")
+              each teacher in teachers                      
+                optgroup(label=teacher.school_name)
+                  option(value=teacher.user_id)=teacher.name
+          div(class="modal-footer")
+            button(type="button"  data-dismiss="modal") 취소
+            button(type="button"  id ="confirm" data-dismiss="modal" data-backdrop="false") 확인
+                
         
         br
         br
     script.
+      //시험 데이터 테이블 구상
+      $(document).ready(function () {
+        $('#selectedStudnets').multiSelect({ selectableOptgroup: true });
+        
+      })  
+      
       //리딩문제 생성시 보기 sortable로 바꿔주는 함수
       $(".sortable").sortable({
         stop: function(event, ui){
@@ -91,8 +124,6 @@ html
       //리딩 문제 생성 ajax함수
       $("#target").submit(function(e){
         var url = "new"
-        var formData = new FormData($(this)[0]);
-        console.log(formData);
         $.ajax({
           type : "POST",
           data: $("#target").serialize(),
@@ -118,6 +149,19 @@ html
         e.preventDefault(); // avoid to execute the actual submit of the form.
 
       })
+      
+      $(document).on("change", "#scope", function(){
+          if($("#scope option:selected").attr("id")==4){
+            $('#myModal').modal('show');
+          }          
+      })
+      
+      $(document).on('click', "#confirm", function(){
+        console.log($("#selectedStudnets").val());
+        $("#4").val($("#selectedStudnets").val());
+        
+      })
+      
       
       //리딩문제 생성에서 뒤로가기 누르면 reading리스트 화면으로 가는 함수
       $("#back").click(function(e){

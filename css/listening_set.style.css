@@ -79,3 +79,17 @@ tr.shown td.details-control {
 #user{
   float: right;
 }
+
+#tableSpan{
+  width: 73%;
+  padding-right: 15px;
+}
+
+.deleteUser{
+  display: none;
+}
+
+.whatever {
+    width: 48%;
+    overflow:auto;
+}

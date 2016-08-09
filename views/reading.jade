@@ -27,6 +27,11 @@ html
       strong  문제가 성공적으로 삭제됬습니다.
     div(class="well well-lg")  
       table(id="table" class="display nowrap" cellspacing="0" width="100%")
+        a(href="/reading/new")
+          select(class="selectpicker") 문제유형
+            each questionType in questionTypes
+              option(value =questionType.r_questiontype_id)=questionType.r_questiontype_type
+          button(type="button" class="btn btn-info" id="makeset" style="float: right;") 문제생성
         thead
           tr
             th 문제 번호
@@ -34,23 +39,19 @@ html
             th 문제 유형
             th 생성 일자
             th action
-        tfoot      
-          tr
-            th
-              a(href="/reading/new")
-                button(type="button" class="btn btn-info" id="makeset" style="float: right;") 문제생성
         - var n = 1
         tbody
-          each question in r_questions
+          each question in questions
             tr(data-child-question=question)
               td=n++
               td(class="details-control")
               td=question.r_questiontype_type
               td=question.r_question_date
               td
+                button(class="btn btn-info btn-sm") 공개범위 수정
                 a(href='/reading/'+question.r_question_id+'/edit')
                   button(type="button" class="btn btn-primary btn-sm") 문제수정
-                button(type="button" id="dbutton" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal" data-id= "#{JSON.stringify(question.r_question_id)}") 삭제
+                button(type="button" id="dbutton" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#myModal" data-id= question.r_question_id) 삭제
                 div(id="myModal" class="modal fade" role="dialog")
                   div(class="modal-dialog")
                     div(class="modal-content")
@@ -62,8 +63,38 @@ html
                       div(class="modal-footer")
                         button(type="button"  data-dismiss="modal") 취소
                         button(type="button"  id = "dele" data-dismiss="modal" ) 삭제
-        
-          
+    div(class="well well-lg")                
+      table(id="sharedTable" class="display nowrap" cellspacing="0" width="100%")
+        thead
+          tr
+            th 문제 번호
+            th 문제 보기
+            th 문제 유형
+            th 생성 일자
+            th 출시자 정보
+            th action
+        - var n = 1    
+        tbody
+          each sharedProblem in sharedProblems
+            tr(data-child-question=sharedProblem)
+              td=n++       
+              td(class="details-control shared")
+              td=sharedProblem.r_questiontype_type
+              td=sharedProblem.r_question_date
+              td=sharedProblem.school_name + sharedProblem.personal_id + sharedProblem.name
+              td
+                button(type="button" class="btn btn-danger btn-sm" id="delShared" data-toggle="modal" data-target="#delModal" data-id= sharedProblem.r_question_id) 삭제
+                div(id="delModal" class="modal fade" role="dialog")
+                  div(class="modal-dialog")
+                    div(class="modal-content")
+                      div(class="modal-header")
+                        button(type="button" class="close" data-dismiss="modal") &times;
+                        h4(class="modal-title") 문제 삭제      
+                      div(class="modal-body")
+                        p 선택하신 공유받은 문제를 삭제하시겠습니까?    
+                      div(class="modal-footer")
+                        button(type="button"  data-dismiss="modal") 취소
+                        button(type="button"  id ="delete" data-dismiss="modal" ) 삭제     
             
 
               
@@ -88,20 +119,32 @@ html
         return result;  
         
       }
-      
+            
       // 데이터테이블 생성 및 구성      
       var table = $('#table').DataTable({
-        "scrollY": "780px",
+        "scrollY": "400px",
         "scrollCollapse": true,
         "paging": false, 
         "width" : "80%"
           
       });
+      
+      var sharedTable = $('#sharedTable').DataTable({
+        "scrollY": "400px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "width" : "80%"
+      })
 
       // Add event listener for opening and closing details
-      $('#table').on('click', 'td.details-control', function () {
+      $(document).on('click', 'td.details-control', function () {
           var tr = $(this).closest('tr');
-          var row = table.row(tr);
+          if($(this).attr('class') == "details-control shared"){
+            var row = sharedTable.row(tr)
+          }else{
+            var row = table.row(tr);
+
+          }
 
           if (row.child.isShown()) {
               // This row is already open - close it
@@ -115,6 +158,23 @@ html
             }
           });
       });
+      $(document).on('click', '#delShared', function(){
+        var sharedProblem = $(this).data('id');
+        $(document).on('click', '#delete', function(){
+          $.ajax({
+            url:'reading/delete/sharing',
+            type : 'POST',
+            data : {sharedProblem},
+            success : function(data){
+              var $dom = $(document.createElement("html"));
+              $dom[0].innerHTML = data;
+              var $body = $dom.find("body");
+              $('body').html($body[0].innerHTML);
+            }
+            
+          })
+        })  
+      } )
         
       // 리딩문제 삭제하는 함수
       $(document).on("click", "#dbutton", function () {
@@ -122,7 +182,7 @@ html
           var one = document.getElementById('dele')
           one.addEventListener('click', function(){
             removeItem(proId);
-    
+            
           })
         });
         
