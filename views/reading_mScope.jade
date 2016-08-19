@@ -1,0 +1,15 @@
+doctype html
+html
+  div
+    div(id="selectGroup"+questionId)
+      br
+      br  
+      label 학생 선택
+      select(id='scopeM'+questionId multiple='multiple' class="multiSel")
+        each restTeacher in restTeachers
+          optgroup(label=restTeacher.school_name)
+            option(value=restTeacher.user_id)=restTeacher.name
+        if(sharedTeachers)    
+          each sharedTeacher in sharedTeachers
+            optgroup(label=sharedTeacher.school_name)
+              option(value=sharedTeacher.user_id selected)=sharedTeacher.name

@@ -29,10 +29,10 @@ html
       strong  시험문제가 성공적으로 추가되었습니다.  
       
     div(class="well well-lg" id="examBack")  
-      label 시험 설명
-      br
-      div(class="well well-lg" id="nameBack")  
-        input(type="text" class="form-control" name = "r_exam_name" placeholder="Example input" id="name" value= r_exam.r_exam_name)
+      div(class="well well-lg" id="nameBack")
+        label 시험 설명
+        br  
+        input(type="text" class="form-control" name = "r_exam_name" placeholder="Example input" id="examName" value= r_exam.r_exam_name)
       br
       div(class="well well-lg")
         table(id="examTable" class="display nowrap" cellspacing="0" width="100%")
@@ -47,32 +47,139 @@ html
             each examQuestion in r_examQuestions
               tr(data-child-question=examQuestion)
                 td=n++
-                td(class="details-control" data-upper="0")
+                td
+                  button(class="btn btn-success btn-sm" id="showPro" data-id = examQuestion.r_question_id data-toggle="modal" data-target="#showModal"+examQuestion.r_question_id) 문제보기
+                  div(id="showModal"+examQuestion.r_question_id class="modal fade" role="dialog")
+                    div(class="modal-dialog modal-lg")
+                      div(class="modal-content")
+                        div(class="modal-header")
+                          button(type="button" class="close" data-dismiss="modal") &times;
+                          h4(class="modal-title") 공개범위 수정      
+                        div(class="modal-body")
+                          div(class="form-group") 
+                            label 문제
+                            input( type="text" class="form-control input-sm" disabled value=examQuestion.r_questiontype_type)
+                          div(class="form-group")  
+                            label 문제 유형
+                            input(class="form-control input-sm"  type="text" disabled value =examQuestion.r_question_topic)
+                          div(class="form-group")
+                            label 본문
+                            textarea(class="form-control input-sm" rows="7" disabled)=examQuestion.r_question_text
+                          div(class="form-group")  
+                            label 보기
+                            input(type = "text" class="form-control input-sm" disabled value =examQuestion.r_question_asw1)
+                            br
+                            input(type = "text" class="form-control input-sm" disabled value =examQuestion.r_question_asw2)
+                            br
+                            input(type = "text" class="form-control input-sm" disabled value =examQuestion.r_question_asw3)
+                            br
+                            input(type = "text" class="form-control input-sm" disabled value =examQuestion.r_question_asw4)
+                            br
+                            input(type = "text" class="form-control input-sm" disabled value =examQuestion.r_question_asw5)
                 td=examQuestion.r_questiontype_type
                 td
                   button(type="button" class="btn btn-danger btn-sm deletePro" data-id=examQuestion.r_question_id data-exam=r_exam.r_exam_id) 취 소       
-            
-  
-      table(id="table" class="display nowrap" cellspacing="0" width="100%")
-        thead
-          tr
-            th 문제 번호
-            th 문제 보기
-            th 문제 유형
-            th 생성 일자
-            th action
-      
-            
-        - var m = 1
-        tbody(class ="showBtn")
-          each question in r_questions
-            tr(data-child-question=question)
-              td=m++
-              td(class="details-control")
-              td=question.r_questiontype_type
-              td=question.r_question_date
-              td
-                button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.r_question_id data-exam=r_exam.r_exam_id) 문제선택
+      div(class="well well-lg")      
+        div(class="well well-lg" style="background-color: white;")
+          table(id="etable" class="display nowrap" cellspacing="0" width="100%")
+            thead
+              tr
+                th 문제 번호
+                th 문제 보기
+                th 문제 유형
+                th 생성 일자
+                th action
+          
+                
+            - var m = 1
+            tbody(class ="showBtn")
+              each question in r_questions
+                tr(data-child-question=question)
+                  td=m++
+                  td
+                    button(class="btn btn-success btn-sm" id="showPro" data-id = question.r_question_id data-toggle="modal" data-target="#showModal"+question.r_question_id) 문제보기
+                    div(id="showModal"+question.r_question_id class="modal fade" role="dialog")
+                      div(class="modal-dialog modal-lg")
+                        div(class="modal-content")
+                          div(class="modal-header")
+                            button(type="button" class="close" data-dismiss="modal") &times;
+                            h4(class="modal-title") 공개범위 수정      
+                          div(class="modal-body")
+                            div(class="form-group") 
+                              label 문제
+                              input( type="text" class="form-control input-sm" disabled value=question.r_questiontype_type)
+                            div(class="form-group")  
+                              label 문제 유형
+                              input(class="form-control input-sm"  type="text" disabled value =question.r_question_topic)
+                            div(class="form-group")
+                              label 본문
+                              textarea(class="form-control input-sm" rows="7" disabled)=question.r_question_text
+                            div(class="form-group")  
+                              label 보기
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw1)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw2)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw3)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw4)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw5)
+                  td=question.r_questiontype_type
+                  td=question.r_question_date
+                  td
+                    button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.r_question_id data-exam=r_exam.r_exam_id) 문제선택
+        div(class="well well-lg" style="background-color: white;")
+          table(id="atable" class="display nowrap" cellspacing="0" width="100%")
+            thead
+              tr
+                th 문제 번호
+                th 문제 보기
+                th 문제 유형
+                th 생성 일자
+                th action
+          
+                
+            - var m = 1
+            tbody(class ="showBtn")
+              each question in sharedProblems
+                tr(data-child-question=question)
+                  td=m++
+                  td
+                    button(class="btn btn-success btn-sm" data-id = question.r_question_id data-toggle="modal" data-target="#showModal"+question.r_question_id) 문제보기
+                    div(id="showModal"+question.r_question_id class="modal fade" role="dialog")
+                      div(class="modal-dialog modal-lg")
+                        div(class="modal-content")
+                          div(class="modal-header")
+                            button(type="button" class="close" data-dismiss="modal") &times;
+                            h4(class="modal-title") 공개범위 수정      
+                          div(class="modal-body")
+                            div(class="form-group") 
+                              label 문제
+                              input( type="text" class="form-control input-sm" disabled value=question.r_questiontype_type)
+                            div(class="form-group")  
+                              label 문제 유형
+                              input(class="form-control input-sm"  type="text" disabled value =question.r_question_topic)
+                            div(class="form-group")
+                              label 본문
+                              textarea(class="form-control input-sm" rows="7" disabled)=question.r_question_text
+                            div(class="form-group")  
+                              label 보기
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw1)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw2)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw3)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw4)
+                              br
+                              input(type = "text" class="form-control input-sm" disabled value =question.r_question_asw5)
+                  td=question.r_questiontype_type
+                  td=question.r_question_date
+                  td
+                    button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.r_question_id data-exam=r_exam.r_exam_id) 문제선택                  
+                    
+                
                                     
       button(class="btn btn-primary" id="nameBtn" class='examBtn' data-id = r_exam.r_exam_id) 완료
       a(href="/reading/exam")
@@ -94,7 +201,7 @@ html
             
         });
       //문제 데이터 테이블 구상      
-      var table = $('#table').DataTable({
+      var table = $('#etable').DataTable({
         "scrollY": "250px",
         "scrollCollapse": true,
         "paging": false, 
@@ -103,19 +210,28 @@ html
 
             
         });
+      var table = $('#atable').DataTable({
+        "scrollY": "250px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "width" : "80%",
+        "bInfo" : false
+            
+        });  
       //문제선택 눌렀을때 시험문제로 추가되는 로직함수        
       $(".addPro").each(function(){
         var addProBt = $(this);
         addProBt.on('click', function(e){
           var questionId = $(this).data('id');
           var examId = $(this).data('exam');
+          var examName = $("#examName").val();
           console.log(questionId);
           console.log(examId);
           
         $.ajax({
             type: "POST",
             url: '/reading/exam/'+examId+'/problem',
-            data: {questionId},
+            data: {questionId, examName},
             success: function(data){
               var $dom = $(document.createElement("html"));
               $dom[0].innerHTML = data;
@@ -123,11 +239,6 @@ html
               var $body = $dom.find("body");
               $('body').html($body[0].innerHTML);
               $('.selectpicker').selectpicker('render').selectpicker('refresh');
-              $("#produce-alert").fadeTo(2000, 1300).slideUp(500, function(){
-                $("#produce-alert").css({'display':'none'});
-                
-                
-              }); 
 
             
             }
@@ -153,11 +264,7 @@ html
               var $body = $dom.find("body");
               $('body').html($body[0].innerHTML);
               $('.selectpicker').selectpicker('render').selectpicker('refresh');
-              $("#delete-alert").fadeTo(2000, 1300).slideUp(1300, function(){
-                $("#delete-alert").css({'display':'none'});
-                
-                
-              }); 
+
 
             }
           })
@@ -168,30 +275,9 @@ html
       })    
       
       
-      // cause deprecated
-        function format(question) {
-          var questionId = question.r_question_id
-          $.ajax({
-            url:'/reading/'+questionId+'/preshow',
-            type : "GET",
-            async: false,  
-            data: +questionId,
-            success: function(data){
-
-               result = data;
-                
-            }
-          })
-          var result = result.replace("<label>정답</label>", "")
-          var res = '<select class="selectpicker">'
-          var ha = '<option value="3" selected>3번</option>'
-          var result = result.replace(ha, "")
-          var result = result.replace(res, "")
-          
-          return result;    
-        } 
+    
       $("#nameBtn").on('click', function(){
-        var examName = $("#name").val()
+        var examName = $("#examName").val()
         var examId = $(this).data('id');
         $.ajax({
           type: "POST",
@@ -211,29 +297,6 @@ html
         
       })     
         
-      // Add event listener for opening and closing details
-      $(".showBtn").each(function(){
-        var showBtn = $(this)
-        showBtn.on('click','td.details-control', function (){
-          var tr = $(this).closest('tr');
-          if($(this).data('upper')==0){
-            var row = examTable.row(tr);
-          }else{
-            var row = table.row(tr);
-          }
-          if (row.child.isShown()) {
-              // This row is already open - close it
-              row.child.hide();
-              tr.removeClass('shown');
-          } else {
-              // Open this row
-              row.child(format(tr.data('child-question'))).show();
-              $('.selectpicker').selectpicker('render').selectpicker('refresh');
-              tr.addClass('shown');
-            }
-          
-            })
-          })
 
           
       });

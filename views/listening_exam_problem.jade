@@ -32,7 +32,7 @@ html
       label 시험 설명
       br
       div(class="well well-lg" id="nameBack")  
-        input(type="text" class="form-control" name = "l_exam_name" placeholder="Example input" id="name" value= l_exam.l_exam_name)
+        input(type="text" class="form-control" name = "l_exam_name" placeholder="Example input" id="examName" value= l_exam.l_exam_name)
       br
       div(class="well well-lg")
         table(id="examTable" class="display nowrap" cellspacing="0" width="100%")
@@ -53,28 +53,52 @@ html
                 td
                   button(type="button" class="btn btn-danger btn-sm deletePro" data-id=examQuestion.l_questionset_id data-exam=l_exam.l_exam_id) 제 거       
       input(type="button" class="btn btn-default" value = "총 문제갯수 : "+l_exam.l_exam_count)      
-  
-      table(id="table" class="display nowrap" cellspacing="0" width="100%")
-        thead
-          tr
-            th 문제집 이름
-            th 문제 갯수
-            th 문제집 확인
-            th 생성 일자
-            th action
-      
-            
-        tbody(class ="showBtn")
-          each question in l_questionSets
-            tr
-              td=question.l_questionset_name
-              td=question.l_questionset_count
-              td
-                a(href="/listening/"+question.l_questionset_id+'/preview')
-                  button(type="button" class="btn btn-success btn-sm preshow" data-id = question.l_questionset_id) 문제관리
-              td=question.l_questionset_date
-              td
-                button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.l_questionset_id data-exam=l_exam.l_exam_id) 문제선택
+      div(class="well well-lg")
+        div(class="well well-lg" style="background-color: white;")
+          table(id="table" class="display nowrap" cellspacing="0" width="100%")
+            thead
+              tr
+                th 문제집 이름
+                th 문제 갯수
+                th 문제집 확인
+                th 생성 일자
+                th action
+          
+                
+            tbody(class ="showBtn")
+              each question in l_questionSets
+                tr
+                  td=question.l_questionset_name
+                  td=question.l_questionset_count
+                  td
+                    a(href="/listening/set/"+question.l_questionset_id+'/preview')
+                      button(type="button" class="btn btn-success btn-sm preshow" data-id = question.l_questionset_id) 문제보기
+                  td=question.l_questionset_date
+                  td
+                    button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.l_questionset_id data-exam=l_exam.l_exam_id) 문제선택
+        div(class="well well-lg" style="background-color: white;")
+          table(id="etable" class="display nowrap" cellspacing="0" width="100%")
+            thead
+              tr
+                th 문제집 이름
+                th 문제 갯수
+                th 문제집 확인
+                th 생성 일자
+                th action
+          
+                
+            tbody(class ="showBtn")
+              each question in restSharedProblems
+                tr
+                  td=question.l_questionset_name
+                  td=question.l_questionset_count
+                  td
+                    a(href="/listening/set/"+question.l_questionset_id+'/preview')
+                      button(type="button" class="btn btn-success btn-sm preshow" data-id = question.l_questionset_id) 문제보기
+                  td=question.l_questionset_date
+                  td
+                    button(type="button" class="btn btn-primary btn-sm addPro" data-id =question.l_questionset_id data-exam=l_exam.l_exam_id) 문제선택          
+                  
                                     
       button(class="btn btn-primary" id="nameBtn" class='examBtn' data-id = l_exam.l_exam_id) 완료
       a(href="/reading/exam")
@@ -101,23 +125,30 @@ html
         "scrollCollapse": true,
         "paging": false, 
         "width" : "80%",
-        "bInfo" : false
-
-            
+        "bInfo" : false        
         });
+        
+      var table = $('#etable').DataTable({
+        "scrollY": "250px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "width" : "80%",
+        "bInfo" : false        
+        });  
+        
       //문제선택 눌렀을때 시험문제로 추가되는 로직함수        
       $(".addPro").each(function(){
         var addProBt = $(this);
         addProBt.on('click', function(e){
           var questionId = $(this).data('id');
           var examId = $(this).data('exam');
-          console.log(questionId);
-          console.log(examId);
+          var examName = $("#examName").val();
+
           
         $.ajax({
             type: "POST",
             url: '/listening/exam/'+examId+'/problem',
-            data: {questionId},
+            data: {questionId, examName},
             success: function(data){
               console.log(data);
               var $dom = $(document.createElement("html"));
@@ -144,11 +175,13 @@ html
         delProBt.on('click', function(e){
           var questionId = $(this).data('id');
           var examId = $(this).data('exam');
+          var examName = $("#examName").val();
+
           
           $.ajax({
             type: "POST",
             url: '/listening/exam/problem/'+questionId+'/delete',
-            data: {examId},
+            data: {examId, examName},
             success: function(data){
               var $dom = $(document.createElement("html"));
               $dom[0].innerHTML = data;
@@ -171,30 +204,9 @@ html
       })    
       
       
-      // cause deprecated
-        function format(question) {
-          var questionId = question.r_question_id
-          $.ajax({
-            url:'/reading/'+questionId+'/preshow',
-            type : "GET",
-            async: false,  
-            data: +questionId,
-            success: function(data){
 
-               result = data;
-                
-            }
-          })
-          var result = result.replace("<label>정답</label>", "")
-          var res = '<select class="selectpicker">'
-          var ha = '<option value="3" selected>3번</option>'
-          var result = result.replace(ha, "")
-          var result = result.replace(res, "")
-          
-          return result;    
-        } 
       $("#nameBtn").on('click', function(){
-        var examName = $("#name").val()
+        var examName = $("#examName").val()
         var examId = $(this).data('id');
         $.ajax({
           type: "POST",

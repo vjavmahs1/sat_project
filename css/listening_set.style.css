@@ -85,6 +85,12 @@ tr.shown td.details-control {
   padding-right: 15px;
 }
 
+#readingTableSpan{
+  width: 80%;
+  padding-right: 15px;
+
+}
+
 .deleteUser{
   display: none;
 }
@@ -92,4 +98,8 @@ tr.shown td.details-control {
 .whatever {
     width: 48%;
     overflow:auto;
+}
+
+div.col-sm-1.typeSize{
+  width: 20%;
 }

@@ -37,7 +37,6 @@ app.use(function(req, res, next){
       }else{
         res.locals.SESSIONUSER = session[0];
         next();
-
       }
     })
 
@@ -46,6 +45,24 @@ app.use(function(req, res, next){
     next();
   }
 })
+
+app.use(function(req,res,next){
+  if(req.session.passport){
+  var getUser = "select * from user where auth_id = ?"
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      next();
+    }else{
+      USER = user[0];
+      next();
+    }
+  })
+  }else{
+    next();
+  }
+})
+
 
 var mysql = require('mysql');
 //파일 업로드 미들웨어
@@ -81,7 +98,8 @@ var conn = mysql.createConnection({
   port     : '3306',
   user     : 'root',
   password : '900620zZ.',
-  database : 'eng'
+  database : 'eng',
+  dateStrings: true
 });
 
 conn.connect();
@@ -91,7 +109,6 @@ app.use('/problem_file',express.static('problem_file'));
 app.use('/javascript',express.static('javascript'));
 app.use('/css',express.static('css'));
 app.use('/multi-select',express.static('multi-select'));
-
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -110,8 +127,10 @@ function authenticationMiddleware () {
   return function (req, res, next) {
     if (req.isAuthenticated()) {
       return next()
+    }else{
+      res.redirect('/login')
+
     }
-    res.redirect('/login')
   }
 }
 
@@ -1041,13 +1060,6 @@ app.get('/admin/madeGroup/:id', function(req, res){
 
 
 
-
-
-
-
-var listening = require('./routes/listening');
-app.use('/listening', listening)
-
 //리딩문제 추가 화면
 //(localhost:2000/reaindg/new 연결)
 app.get('/reading/new', function(req, res){
@@ -1092,10 +1104,14 @@ app.post('/reading/new', function(req,res){
       console.log(err);
       res.status(500).send('Internal Server Error');
     }else{
+      var scope = req.body.scope;
+      if(scope != 1 && scope != 2 && scope !=3){
+        scope = 4;
+      }
       var addProblem = 'INSERT INTO `r_question`(`r_questiontype_id`,`r_question_topic`,`r_question_text`,`r_question_asw1`,'+
-        '`r_question_asw2`,`r_question_asw3`,`r_question_asw4`,`r_question_asw5`,r_question_solution,r_question_explain, publisher_id) VALUES(?,?,?,?,?,?,?,?,?,?,?)';
+        '`r_question_asw2`,`r_question_asw3`,`r_question_asw4`,`r_question_asw5`,r_question_solution,r_question_explain, publisher_id, scope_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)';
         conn.query(addProblem,[r_questiontype_id,r_question_topic,r_question_text,r_question_asw1,r_question_asw2,r_question_asw3,
-                  r_question_asw4,r_question_asw5,r_question_solution,r_question_explain, user[0].user_id], function(err, addedProblem){
+                  r_question_asw4,r_question_asw5,r_question_solution,r_question_explain, user[0].user_id, scope], function(err, addedProblem){
                     if(err){
                       console.log(err);
                       res.status(500).send('Internal Server Error');
@@ -1253,7 +1269,6 @@ app.get('/reading', function(req, res){
                     console.log(err);
                     res.status(500).send("Internal Server Error")
                   }else{
-                    console.log(sharedProblems);
                     res.render('reading',{questions:questions, questionTypes:questionTypes, sharedProblems:sharedProblems})
                   }
                 })
@@ -1263,7 +1278,181 @@ app.get('/reading', function(req, res){
       })
     }
   })
+})
 
+app.get('/reading/type/:id', function(req, res){
+  var getUser = "select*from user where auth_id =?"
+  var typeId = req.params.id;
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error")
+    }else{
+      var getMyProblems = "select q.*,qt.`r_questiontype_type` from r_question as q inner join r_questiontype as qt on q.r_questiontype_id = qt.r_questiontype_id and q.`publisher_id`=? and q.`r_questiontype_id` = ?"
+      conn.query(getMyProblems, [user[0].user_id,typeId], function(err, questions){
+        if(err){
+          console.log(err);
+          res.status(500).send("Internal Server Error")
+        }else{
+          var getQuestionType = "Select * from r_questiontype"
+          conn.query(getQuestionType, function(err, questionTypes){
+            if(err){
+              console.log(err);
+              res.status(500).send("Internal Server Error")
+            }else{
+              var getSharedProblems = "select q.*, qt.`r_questiontype_type`, u.name, u.personal_id, s.school_name from r_question as q inner join r_shared_question as sq "+
+               "on q.r_question_id = sq.r_question_id inner join user as u on u.user_id = q.publisher_id inner join school as s on u.school_id = s.school_id"+
+                " inner join r_questiontype as qt on q.`r_questiontype_id` = qt.r_questiontype_id  where sq.teacher_id = ? and q.r_questiontype_id =?"
+                conn.query(getSharedProblems, [user[0].user_id, typeId], function(err, sharedProblems){
+                  if(err){
+                    console.log(err);
+                    res.status(500).send("Internal Server Error")
+                  }else{
+                    res.render('reading',{questions:questions, questionTypes:questionTypes, sharedProblems:sharedProblems})
+                  }
+                })
+              }
+            })
+          }
+        })
+      }
+    })
+  })
+
+app.get('/reading/modify/scope/:id', function(req, res){
+  var getUser = "select*from user where auth_id =?"
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error")
+    }else{
+      var questionId = req.params.id;
+      var getSharedTeacher = "select u.*,s.school_name from user as u inner join r_shared_question as sq on u.user_id = sq.teacher_id and sq.`r_question_id` = ? inner join school as s on u.school_id = s.school_id "
+      conn.query(getSharedTeacher, questionId, function(err, sharedTeachers){
+        if(err){
+          console.log(err);
+          res.status(500).send("Internal Server Error")
+        }else{
+          var getRestTeachers = "select u.*, s.role_id, sch.school_name from user as u inner join serial as s on u.serial_id = s.serial_id inner join school as sch on u.school_id = sch.school_id where s.role_id =3 or s.role_id =1 and u.user_id not in(select u.user_id from user as u inner join r_shared_question as sq on u.user_id = sq.teacher_id and sq.`r_question_id` = ?) and u.user_id not in(select user_id from user where user_id =?)"
+             conn.query(getRestTeachers, [questionId, user[0].user_id], function(err, restTeachers){
+               if(err){
+                 console.log(err);
+                 res.status(500).send("Internal Server Error")
+               }else{
+                 res.render('reading_mScope', {sharedTeachers:sharedTeachers, restTeachers:restTeachers, questionId:questionId})
+               }
+             })
+        }
+      })
+    }
+  })
+})
+
+app.get('/reading/scope/:id', function(req,res){
+  var questionId = req.params.id
+  var getUser = "select*from user where auth_id =?"
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error")
+    }else{
+      var getTeachers = "select u.*, sc.school_name, s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id inner join school as sc on u.school_id = sc.school_id where s.role_id =3 or s.role_id =1 and u.user_id not in(select user.user_id from user where user_id = ?)"
+      conn.query(getTeachers, user[0].user_id, function(err, restTeachers){
+        if(err){
+          console.log(err);
+          res.status(500).send("Internal Server Error")
+        }else{
+          res.render('reading_mScope', {restTeachers:restTeachers, questionId:questionId})
+        }
+      })
+
+    }
+  })
+})
+
+app.post('/reading/scope/modify/:id', function(req,res){
+  var questionId = req.params.id;
+  var scope = req.body.scope
+  var status ;
+  var getUser = "select*from user where auth_id =?"
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error");
+    }else{
+      var deleteForModify = "delete from r_shared_question where r_question_id = ?"
+      conn.query(deleteForModify, questionId, function(err, row){
+        if(err){
+          console.log(err);
+          res.status(500).send("Internal Server Error");
+        }else{
+          if(scope !=1 && scope !=2 && scope !=3){
+            scope = 4;
+          }
+          var updateScope = "UPDATE r_question SET `scope_id` =? where r_question_id =?"
+          conn.query(updateScope,[scope, questionId], function(err, result){
+            if(err){
+              console.log(err);
+              res.status(500).send("Internal Server Error");
+            }else{
+              var sharingProblem = "INSERT INTO r_shared_question(teacher_id, r_question_id) values(?,?)"
+              if(scope == 1){
+                var getAllTeacher = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?)"
+                conn.query(getAllTeacher, user[0].user_id, function(err, allTeachers){
+                  for(var i=0; i<allTeachers.length; i++){
+                    conn.query(sharingProblem,[allTeachers[i].user_id, questionId], function(err, result){
+                      if(err){
+                        console.log(err);
+                        res.status(500).send('Internal Server Error');
+                      }else{
+                        return;
+                      }
+                    })
+                  }
+                  res.redirect('/reading')
+                })
+              }else if(scope ==2){
+                var getSchoolTeachers = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?) and u.school_id = ?"
+                conn.query(getSchoolTeachers, [user[0].user_id, user[0].school_id], function(err, schoolTeachers){
+                  for(var i=0; i<schoolTeachers.length; i++){
+                    console.log(schoolTeachers.length);
+                    conn.query(sharingProblem, [schoolTeachers[i].user_id, questionId], function(err, result){
+                      if(err){
+                        console.log(err);
+                        res.status(500).send('Internal Server Error');
+                      }else{
+                        return;
+                      }
+                    })
+                  }
+                  res.redirect('/reading')
+                })
+
+              }else if(scope ==3){
+                console.log('3');
+                  res.redirect('/reading')
+              }else{
+                console.log('hello');
+                var selectedTeacherId =JSON.parse("[" + req.body.scope + "]");
+                for(var i=0; i<selectedTeacherId.length; i++){
+                  conn.query(sharingProblem, [selectedTeacherId[i], questionId], function(err, result){
+                    if(err){
+                      console.log(err);
+                      res.status(500).send('Internal Server Error');
+                    }else{
+                      return;
+                    }
+                  })
+                }
+                res.redirect('/reading')
+              }
+            }
+          })
+
+        }
+      })
+    }
+  })
 })
 
 app.post('/reading/delete/sharing', function(req, res){
@@ -1301,8 +1490,8 @@ app.get('/reading/:id/preshow', function(req, res){
 //리딩시험 생성
 app.post('/reading/exam/new', function(req, res){
 
-  var sql = 'insert into r_exam (r_exam_date) values(default)'
-  conn.query(sql, function(err, row){
+  var sql = 'insert into r_exam (teacher_id) values(?)'
+  conn.query(sql, USER.user_id, function(err, row){
     if(err){
       console.log(err);
       res.status(500).send('Internal server Error')
@@ -1325,9 +1514,9 @@ app.get('/reading/exam/:id/problem', function(req, res){
       console.log(err);
       res.status(500).send('Internal server Error')
     }else{
-      var sql = 'select q.*,t.* from r_question as q inner join r_questiontype as t on q.r_questiontype_id = t.r_questiontype_id'+
-                ' where  r_question_id not in(select r_question_id from r_exam_question where r_exam_id = ?) order by q.`r_question_id` desc';
-        conn.query(sql, [id], function(err, r_questions){
+      var getRestProblem = "select q.*, qt.r_questiontype_type from r_question as q inner join user as u on q.publisher_id = u.user_id inner join r_questiontype as qt on"+
+                          " q.r_questiontype_id = qt.r_questiontype_id where u.user_id = ? and q.r_question_id not in(select `r_question_id` from `r_exam_question` where r_exam_id =?)"
+        conn.query(getRestProblem, [USER.user_id,id], function(err, r_questions){
           if(err){
             console.log(err);
             res.status(500).send('Internal Server Error')
@@ -1338,8 +1527,17 @@ app.get('/reading/exam/:id/problem', function(req, res){
                 console.log(err);
                 res.status(500).send('Internal Server Error')
               }else{
-                res.render('reading_exam_problem',{r_exam:r_exam[0], r_questions:r_questions, r_examQuestions:r_examQuestions});
-
+                var getRestSharedProblem = "select q.*, qt.r_questiontype_type, u.name, u.personal_id, s.school_name from r_question as q inner join r_shared_question as sq on q.r_question_id = sq.`r_question_id`inner join user as u"
+                                      +" on u.user_id = q.publisher_id inner join school as s on u.school_id = s.school_id inner join r_questiontype as qt on q.r_questiontype_id = qt.`r_questiontype_id`where sq.teacher_id = ? "+
+                                      "and q.r_question_id not in (select r_question_id from r_exam_question where r_exam_id = ?)"
+                conn.query(getRestSharedProblem, [USER.user_id, id], function(err, sharedProblems){
+                  if(err){
+                    console.log(err);
+                    res.status(500).send('Internal Server Error')
+                  }else{
+                    res.render('reading_exam_problem',{r_exam:r_exam[0], r_questions:r_questions, sharedProblems:sharedProblems,r_examQuestions:r_examQuestions});
+                  }
+                })
               }
             })
           }
@@ -1352,14 +1550,15 @@ app.get('/reading/exam/:id/problem', function(req, res){
 app.post('/reading/exam/:id/problem',function(req, res){
   var examId = req.params.id
   var questionId = req.body.questionId
+  var examName = req.body.examName;
   var sql = 'insert into r_exam_question (r_exam_id,r_question_id) VALUES(?,?)'
     conn.query(sql,[examId, questionId], function(err, rows){
       if(err){
         console.log(err);
         res.status(500).send('Internal Server Error');
       }else{
-        var sql = 'update r_exam set r_exam_count =r_exam_count+1 where r_exam_id = ?'
-        conn.query(sql, [examId], function(err, rows){
+        var sql = 'update r_exam set r_exam_count =r_exam_count+1, r_exam_name =? where r_exam_id = ?'
+        conn.query(sql, [examName, examId], function(err, rows){
           if(err){
             console.log(err);
             res.status(500).send('Internal Server Error');
@@ -1399,9 +1598,9 @@ app.post('/reading/exam/problem/:id/delete', function(req, res){
 
 
 // 리딩시험 리스트
-app.get('/exam', function(req, res){
-  var  sql= 'select * from r_exam'
-  conn.query(sql, function(err, r_exams){
+app.get('/reading/exam', function(req, res){
+  var  sql= 'select * from r_exam where teacher_id = ?'
+  conn.query(sql, USER.user_id, function(err, r_exams){
     if(err){
       console.log(err);
       res.status(500).send('Internal Server Error');
@@ -1409,7 +1608,6 @@ app.get('/exam', function(req, res){
       res.render('reading_exam', {r_exams:r_exams});
     }
   })
-
 })
 
 // 리딩시험 삭제
@@ -1442,6 +1640,617 @@ app.post('/reading/exam/name', function(req,res){
   })
 })
 
+
+//문제셋의 이름, 오디오파일 넣는 화면 라우팅
+app.get('/listening/set/new', function(req, res){
+  var getTeachers = "select u.*, sc.school_name, s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id inner join school as sc on u.school_id = sc.school_id where s.role_id =3 or s.role_id =1 "
+  conn.query(getTeachers, function(err, teachers){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }
+    res.render('listening_set_new',{teachers:teachers});
+
+  })
+
+
+
+});
+
+//문제셋의 이름, 오디오파일, 생성날짜 데이터 받고 l_questionset 로우에 insert
+app.post('/listening/set/new', l_set_upload.single('l_userfile_audio'), function(req, res, next){
+  var l_questionset_name = req.body.l_questionset_name;
+  var l_questionset_audiopath = "http://localhost:3000/"+req.file.path;
+  var scope = req.body.scope;
+  if(scope != 1 && scope != 2 && scope !=3){
+    scope = 4;
+  }
+  var sql = 'INSERT into `l_questionset` (`l_questionset_name`, `l_questionset_audiopath`, publisher_id, scope_id) VALUES(?,?,?,?)';
+  conn.query(sql,[l_questionset_name, l_questionset_audiopath, USER.user_id, scope], function(err, addedProblem){
+    if(err){
+      console.log(err);
+     res.status(500).send('Internal Server Error');
+   }else{
+     var sharingProblem = "INSERT INTO l_shared_questionset(teacher_id, l_questionset_id) VALUES(?,?)"
+     if(scope == 1){
+       var getAllTeacher = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?)"
+      conn.query(sharingProblem, USER.user_id, function(err, allTeachers){
+        for(var i=0; i<allTeachers.length; i++){
+          conn.query(sharingProblem, [allTeachers[i].user_id, addedProblem.insertId], function(err, result){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error');
+            }else{
+              return;
+            }
+          })
+        }
+        res.end(JSON.stringify(addedProblem.insertId))
+
+      })
+    }else if (scope == 2) {
+      var getSchoolTeachers = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?) and u.school_id = ?"
+      conn.query(getSchoolTeachers, [USER.user_id, USER.school_id], function(err, schoolTeachers){
+        for(var i=0; i<schoolTeachers.length; i++){
+          conn.query(sharingProblem, [schoolTeachers[i].user_id, addedProblem.insertId], function(err, result){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error');
+            }else{
+              return;
+            }
+          })
+        }
+        res.end(JSON.stringify(addedProblem.insertId))
+      })
+    }else if (scope ==3) {
+      res.end(JSON.stringify(addedProblem.insertId))
+
+    }else{
+      var selectedTeacherId = JSON.parse("[" + req.body.scope + "]");
+      for(var i=0; i<selectedTeacherId.length; i++){
+        conn.query(sharingProblem, [selectedTeacherId[i], addedProblem.insertId], function(err, result){
+          if(err){
+            console.log(err);
+            res.status(500).send('Internal Server Error');
+          }else{
+            return;
+          }
+        })
+      }
+      res.end(JSON.stringify(addedProblem.insertId))
+
+    }
+   }
+  })
+});
+
+
+app.get('/listening/set', function(req, res){
+  var getProblems = "select * from l_questionset where publisher_id =? "
+  conn.query(getProblems, USER.user_id, function(err, problems){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      var getSharedProblems = "select q.*, u.name, u.personal_id, s.school_name from l_questionset as q inner join l_shared_questionset as sq on q.l_questionset_id = sq.l_questionset_id inner join user as u on u.user_id = q.publisher_id inner join school as s on u.school_id = s.school_id where sq.teacher_id = ?"
+        conn.query(getSharedProblems, USER.user_id, function(err, sharedProblems){
+          if(err){
+            console.log(err);
+            res.status(500).send('Internal Server Error');
+          }else{
+            res.render('listening_set', {l_questionsets : problems, sharedProblems : sharedProblems})
+          }
+        })
+    }
+  })
+})
+
+app.get('/listening/modify/scope/:id', function(req, res){
+  var questionSetId = req.params.id;
+  var getSharedTeacher ="select u.*,s.school_name from user as u inner join l_shared_questionset as sq on u.user_id = sq.teacher_id and sq.`l_questionset_id` = ? inner join school as s on u.school_id = s.school_id "
+  conn.query(getSharedTeacher, questionSetId, function(err, sharedTeachers){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error")
+    }else{
+      console.log(sharedTeachers)
+      var getRestTeachers ="select u.*, s.role_id, sch.school_name from user as u inner join serial as s on u.serial_id = s.serial_id inner join school as sch on u.school_id = sch.school_id where (s.role_id =3 or s.role_id =1) and u.user_id not in(select u.user_id from user as u inner join l_shared_questionset as sq on u.user_id = sq.teacher_id and sq.`l_questionset_id` = ?) and u.user_id not in(select user_id from user where user_id =?)"
+        conn.query(getRestTeachers, [questionSetId, USER.user_id], function(err, restTeachers){
+          if(err){
+            console.log(err);
+            res.status(500).send("Internal Server Error")
+          }else{
+            res.render('reading_mScope', {sharedTeachers:sharedTeachers, restTeachers:restTeachers, questionId:questionSetId})
+          }
+        })
+    }
+  })
+})
+
+app.post('/listening/scope/modify/:id', function(req, res){
+  var questionId = req.params.id;
+  var scope = req.body.scope;
+  var deleteForModify = "delete from l_shared_questionset where l_questionset_id = ?"
+  conn.query(deleteForModify, questionId, function(err, row){
+    if(err){
+      console.log(err);
+      res.status(500).send("Internal Server Error");
+    }else{
+      if(scope !=1 && scope !=2 && scope !=3){
+        scope = 4;
+      }
+      var updateScope = "UPDATE l_questionset SET `scope_id` = ? where l_questionset_id = ?"
+      conn.query(updateScope,[scope, questionId], function(err, result){
+        if(err){
+          console.log(err);
+          res.status(500).send("Internal Server Error");
+        }else{
+          var sharingProblem = "INSERT INTO l_shared_questionset(teacher_id, l_questionset_id) VALUES(?,?)"
+          if(scope == 1){
+            var getAllTeacher = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?)"
+           conn.query(getAllTeacher, USER.user_id, function(err, allTeachers){
+             for(var i=0; i<allTeachers.length; i++){
+               conn.query(sharingProblem, [allTeachers[i].user_id, questionId], function(err, result){
+                 if(err){
+                   console.log(err);
+                   res.status(500).send('Internal Server Error');
+                 }else{
+                   return;
+                 }
+               })
+             }
+             res.redirect('/listening/set')
+           })
+         }else if (scope == 2) {
+           var getSchoolTeachers = "select u.*,  s.role_id from user as u inner join serial as s on u.serial_id = s.serial_id where s.role_id =3 or s.role_id =1 and u.user_id not in (select user_id from user where user_id = ?) and u.school_id = ?"
+           conn.query(getSchoolTeachers, [USER.user_id, USER.school_id], function(err, schoolTeachers){
+             for(var i=0; i<schoolTeachers.length; i++){
+               conn.query(sharingProblem, [schoolTeachers[i].user_id, questionId], function(err, result){
+                 if(err){
+                   console.log(err);
+                   res.status(500).send('Internal Server Error');
+                 }else{
+                   return;
+                 }
+               })
+             }
+             res.redirect('/listening/set')
+           })
+         }else if(scope ==3) {
+           res.redirect('/listening/set')
+
+         }else{
+           var selectedTeacherId = JSON.parse("[" + req.body.scope + "]");
+           console.log(selectedTeacherId)
+           for(var i=0; i<selectedTeacherId.length; i++){
+             conn.query(sharingProblem, [selectedTeacherId[i], questionId], function(err, result){
+               if(err){
+                 console.log(err);
+                 res.status(500).send('Internal Server Error');
+               }else{
+                 return;
+               }
+             })
+           }
+           res.redirect('/listening/set')
+         }
+        }
+      })
+    }
+  })
+})
+
+
+
+// questionset delete
+app.post('/listening/set/delete', function(req, res){
+  var target_id = req.body.id
+  var sql = 'Delete from l_questionset WHERE l_questionset_id = ?'
+  conn.query(sql,[target_id], function(err, result){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    } else{
+        res.redirect('/listening/set');
+
+    }
+  });
+})
+
+
+// questionset 이름, 오디오 파일 수정화면
+app.get('/listening/set/edit/:id', function(req, res){
+  var sql = 'select* from l_questionset where l_questionset_id = ?'
+  var id = req.params.id;
+  conn.query(sql,[id], function(err, l_questionsets){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    } else{
+      res.render('listening_set_edit',{l_questionset:l_questionsets[0]});
+    }
+  })
+
+})
+
+
+// questionset 이름, 오디오 파일 수정
+//(오디오파일이 있으면 오디오파일도 같이, 없으면 없이)
+
+app.post('/listening/set/edit/:id', l_set_upload.single('l_userfile_audio'), function(req, res, next){
+  var l_questionset_name = req.body.l_questionset_name;
+  var l_questionset_id = req.body.l_questionset_id;
+  var id = req.params.id;
+  console.log(req.file);
+  if(req.file != null){
+    var l_questionset_audiopath = "http://localhost:3000/"+req.file.path;
+    var sql = 'UPDATE `l_questionset` SET `l_questionset_name` =?, l_questionset_audiopath =? where l_questionset_id = ? '
+    conn.query(sql,[l_questionset_name, l_questionset_audiopath, id], function(err, rows){
+        if(err){
+          console.log(err);
+         res.status(500).send('Internal Server Error');
+       }else{
+         var insertId = row.insertId
+         res.end(JSON.stringify(insertId))
+
+        }
+      })
+  }else{
+    var sql = 'UPDATE `l_questionset` SET `l_questionset_name` =? where l_questionset_id = ? '
+    conn.query(sql,[l_questionset_name, id], function(err, rows){
+      if(err){
+        console.log(err);
+       res.status(500).send('Internal Server Error');
+     }else{
+       console.log(rows);
+       var updateId = l_questionset_id
+       res.end(JSON.stringify(updateId))
+      }
+      })
+
+  }
+})
+
+//문제셋 문제관리 화면
+
+app.get('/listening/set/:id', function(req, res){
+  var sql =  'select* from l_questionset where l_questionset_id = ?'
+  var id = req.params.id;
+  conn.query(sql,[id], function(err, l_questionsets){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    } else{
+      var sql ='SELECT*FROM l_questiontype';
+      conn.query(sql, function(err, l_questiontypes){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        } else{
+          var sql ='select q.*, t.* from l_question as q inner join l_questiontype as t on q.l_questiontype_id = t.l_questiontype_id where q.l_questionset_id = ' + id
+          conn.query(sql, function(err, l_questions){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error');
+            } else{
+              res.render('listening_set_problem',{l_questionset:l_questionsets[0], l_questiontypes:l_questiontypes, l_questions : l_questions});
+
+            }
+          })
+
+        }
+      })
+
+    }
+  })
+})
+
+
+//문제관리 문제 추가
+app.post('/listening/set/:id',l_set_upload.single('l_userfile_image'), function(req, res, next){
+  var l_questionset_id = req.params.id;
+  var l_questiontype_id = req.body.l_questiontype_id;
+  var l_question_topic = req.body.l_question_topic;
+  if(l_questiontype_id == 3){
+    var l_question_imagepath = "http://localhost:3000/"+req.file.path;
+  }
+  var l_question_asw1 = req.body.l_question_asw1;
+  var l_question_asw2 = req.body.l_question_asw2;
+  var l_question_asw3 = req.body.l_question_asw3;
+  var l_question_asw4 = req.body.l_question_asw4;
+  var l_question_asw5 = req.body.l_question_asw5;
+  var l_question_solution = req.body.l_question_solution;
+  var l_question_explain = req.body.l_question_explain
+
+  var sql ='INSERT INTO `l_question`(`l_questionset_id`, `l_questiontype_id`,`l_question_topic`, `l_question_imagepath`,`l_question_asw1`,' +
+  ' `l_question_asw2`,`l_question_asw3`,`l_question_asw4`,`l_question_asw5`,`l_question_solution`,`l_question_explain`) VALUES(?,?,?,?,?,?,?,?,?,?,?);'
+  conn.query(sql, [l_questionset_id,l_questiontype_id,l_question_topic,l_question_imagepath,l_question_asw1,l_question_asw2,l_question_asw3,l_question_asw4,l_question_asw5,l_question_solution, l_question_explain],function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+
+    }else{
+      var sql = 'update l_questionset set l_questionset_count = l_questionset_count+1 where l_questionset_id =?'
+      conn.query(sql, l_questionset_id, function(err, rows){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          res.redirect('/listening/set/'+l_questionset_id);
+
+        }
+      })
+    }
+  })
+
+})
+
+//문제관리 문제 수정
+app.post('/listening/problem/edit/:id',l_set_upload.single('l_userfile_image'), function(req, res, next){
+  var l_questionset_id = req.body.l_questionset_id
+  var l_question_id = req.params.id;
+  var l_questiontype_id = req.body.l_questiontype_id;
+  var l_question_topic = req.body.l_question_topic;
+  var l_question_asw1 = req.body.l_question_asw1;
+  var l_question_asw2 = req.body.l_question_asw2;
+  var l_question_asw3 = req.body.l_question_asw3;
+  var l_question_asw4 = req.body.l_question_asw4;
+  var l_question_asw5 = req.body.l_question_asw5;
+  var l_question_solution = req.body.l_question_solution;
+  var l_question_explain = req.body.l_question_explain
+
+  if(req.file != null && l_questiontype_id ==3){
+    var l_question_imagepath = "http://localhost:3000/"+req.file.path;
+  }
+
+  if(l_question_imagepath != null){
+    var sql = 'UPDATE `l_question` SET `l_questiontype_id`=?,`l_question_topic`=?,`l_question_imagepath`=?,l_question_asw1 =?,'
+      +'`l_question_asw2`=?,`l_question_asw3`=?,`l_question_asw4`=?,`l_question_asw5`=?,`l_question_solution` =?,`l_question_explain`=? WHERE l_question_id = ?';
+    conn.query(sql, [l_questiontype_id,l_question_topic,l_question_imagepath,l_question_asw1,l_question_asw2,l_question_asw3,
+              l_question_asw4,l_question_asw5,l_question_solution,l_question_explain, l_question_id], function(err, rows){
+                if(err){
+                  console.log(err);
+                 res.status(500).send('Internal Server Error');
+               }else{
+                 res.redirect('/listening/set/'+l_questionset_id)
+               }
+
+              })
+
+  }else{
+    var sql = 'UPDATE `l_question` SET `l_questiontype_id`=?,`l_question_topic`=?,l_question_asw1 =?,'
+      +'`l_question_asw2`=?,`l_question_asw3`=?,`l_question_asw4`=?,`l_question_asw5`=?,`l_question_solution` =?,`l_question_explain`=? WHERE l_question_id = ?';
+    conn.query(sql, [l_questiontype_id,l_question_topic,l_question_asw1,l_question_asw2,l_question_asw3,
+              l_question_asw4,l_question_asw5,l_question_solution,l_question_explain, l_question_id], function(err, rows){
+                if(err){
+                  console.log(err);
+                 res.status(500).send('Internal Server Error');
+               }else{
+                 res.redirect('/listening/set/'+l_questionset_id)
+               }
+
+              })
+
+  }
+
+})
+
+//문제관리 문제 사제
+app.post('/listening/set/problem/delete/:id', function(req, res){
+  var target_id = req.params.id;
+  var l_questionset_id = req.body.questionset_id
+  var sql = 'Delete from l_question WHERE l_question_id = ?'
+  conn.query(sql,[target_id], function(err, result){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+
+    }else{
+      var sql = 'update l_questionset set l_questionset_count = l_questionset_count-1 where l_questionset_id =?'
+      conn.query(sql, l_questionset_id, function(err, rows){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          res.redirect('/listening/set/'+l_questionset_id);
+
+        }
+      })
+
+    }
+  });
+})
+
+
+
+//시험추가, 관리 화면
+app.get('/listening/exam/:id/problem', function(req, res){
+  var id = req.params.id
+  var getExam = 'select * from l_exam where l_exam_id =? '
+  conn.query(getExam, [id], function(err,l_exam){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal server Error')
+    }else{
+      var getRestProblems = 'select * from l_questionset where publisher_id = ? and l_questionset_id not in(select l_questionset_id from l_exam_questionset where l_exam_id = ?)'
+        conn.query(getRestProblems, [USER.user_id ,id], function(err, l_questionSets){
+          if(err){
+            console.log(err);
+            res.status(500).send('Internal Server Error')
+          }else{
+            var getExamProblems = "select q.* from l_questionset as q inner join l_exam_questionset as eq on eq.l_questionset_id = q.l_questionset_id where eq.l_exam_id = ?"
+            conn.query(getExamProblems, [id], function(err, l_examQuestions){
+              if(err){
+                console.log(err);
+                res.status(500).send('Internal Server Error')
+              }else{
+                var getRestSharedProblem = "select q.*, u.name, u.personal_id, s.school_name from l_questionset as q inner join l_shared_questionset as sq on q.`l_questionset_id`= sq.l_questionset_id inner join user as u on u.user_id = q.publisher_id inner join school as s on u.school_id = s.school_id where sq.teacher_id = ? and q.`l_questionset_id` not in (select l_questionset_id from l_exam_questionset where l_exam_id = ?)"
+                conn.query(getRestSharedProblem,[USER.user_id, id], function(err, restSharedProblems){
+                  if(err){
+                    console.log(err);
+                    res.status(500).send('Internal Server Error')
+                  }else{
+                    res.render('listening_exam_problem',{l_exam:l_exam[0], l_questionSets:l_questionSets, l_examQuestions:l_examQuestions, restSharedProblems: restSharedProblems})
+
+                  }
+                })
+              }
+            })
+        }
+      })
+    }
+  })
+
+})
+
+//시험 문제셋 추가
+app.post('/listening/exam/:id/problem', function(req, res){
+  var examId = req.params.id
+  var questionSetId = req.body.questionId
+  var examName = req.body.examName;
+  console.log(examName)
+  var sql = "insert into l_exam_questionset (l_exam_id, l_questionset_id) VALUES(?,?)"
+    conn.query(sql, [examId, questionSetId], function(err, rows){
+      if(err){
+        console.log(err);
+        res.status(500).send('Internal Server Error');
+      }else{
+        var sql = "select l_questionset_count from l_questionset where l_questionset_id = ?"
+          conn.query(sql, [questionSetId], function(err, l_questionset_count){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error')
+            }else{
+              var count = l_questionset_count[0].l_questionset_count
+              var sql = 'update l_exam set l_exam_count = l_exam_count+'+count+', l_exam_name = ? where l_exam_id = ?'
+              conn.query(sql, [examName,examId], function(err, rows){
+                  if(err){
+                    console.log(err);
+                    res.status(500).send('Internal Server Error')
+                  }else{
+                    res.redirect('/listening/exam/'+examId+'/problem')
+                  }
+              })
+            }
+          })
+      }
+    })
+})
+// 시험 문제 셋 삭제
+app.post('/listening/exam/problem/:id/delete', function(req, res){
+  var setId = req.params.id;
+  var examId = req.body.examId
+  var examName = req.body.examName;
+  var sql = 'delete from l_exam_questionset where l_questionset_id =?'
+  conn.query(sql, setId,function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+        var sql = "select l_questionset_count from l_questionset where l_questionset_id = ?"
+          conn.query(sql, setId, function(err, l_questionset_count){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error')
+            }else{
+              var count = l_questionset_count[0].l_questionset_count
+              var sql = 'update l_exam set l_exam_count = l_exam_count-'+count+', l_exam_name = ? where l_exam_id = ?'
+              conn.query(sql, [examName,examId], function(err, rows){
+                if(err){
+                  console.log(err);
+                  res.status(500).send('Internal Server Error')
+                }else{
+                  res.redirect('/listening/exam/'+examId+'/problem')
+
+                }
+              })
+            }
+          })
+    }
+  })
+})
+
+app.get('/listening/exam', function(req, res){
+  var getExams = 'select * from l_exam where teacher_id = ?'
+  conn.query(getExams, USER.user_id, function(err, l_exams){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      res.render('listening_exam', {l_exams:l_exams});
+
+    }
+  })
+})
+
+
+
+app.post('/listening/exam/new', function(req, res){
+  var sql = 'insert into l_exam (teacher_id) values(?)'
+  conn.query(sql, USER.user_id, function(err, row){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal server Error')
+    }else{
+      var insertId = row.insertId
+      res.end(JSON.stringify(insertId))
+    }
+  })
+})
+
+// 시험 삭제
+app.post('/listening/exam/drop', function(req, res){
+  var examId= req.body.examId
+  console.log(examId);
+  var sql = 'delete from l_exam where l_exam_id = ?'
+  conn.query(sql, [examId], function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      res.redirect('/listening/exam');
+    }
+  })
+})
+
+// 시험 업데이트
+app.post('/listening/exam/name', function(req,res){
+  var examName = req.body.examName;
+  var examId = req.body.examId
+  var sql = 'update r_exam set r_exam_name = ? where r_exam_id = ?'
+  conn.query(sql, [examName, examId], function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      res.redirect('/reading/exam')
+    }
+  })
+})
+
+//시험문제 관리 창에서 문제보기 눌렀을때 주는화면
+app.get('/listening/set/:id/preview', function(req, res){
+  var setId = req.params.id
+  var sql =  'select* from l_questionset where l_questionset_id = ?'
+  conn.query(sql, setId, function(err, l_questionSet){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      var sql = 'select q.*, t.* from l_question as q inner join l_questiontype as t on q.l_questiontype_id = t.l_questiontype_id where q.l_questionset_id = ?'
+      conn.query(sql, setId, function(err, l_questions){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          res.render('listening_set_preview', {l_questionSet:l_questionSet[0], l_questions:l_questions})
+
+        }
+      })
+    }
+  })
+})
 
 
 app.listen(3000,function(){
