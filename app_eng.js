@@ -8,6 +8,8 @@ var hasher = bkfd2Password();
 
 var bodyParser = require('body-parser');
 var app = express();
+var port = process.env.PORT || 3000;
+
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(session({
@@ -2253,6 +2255,6 @@ app.get('/listening/set/:id/preview', function(req, res){
 })
 
 
-app.listen(3000,function(){
-  console.log('Connected, 3000 port!');
+app.listen(port, function() {
+  console.log('Listening on port ' + port)
 })
