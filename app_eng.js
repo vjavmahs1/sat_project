@@ -8,7 +8,7 @@ var hasher = bkfd2Password();
 
 var bodyParser = require('body-parser');
 var app = express();
-var port = process.env.PORT || 3000;
+
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -386,7 +386,7 @@ app.post('/signup', function(req, res){
           if(req.body.teachers){
             console.log(req.body);
             var teachers = req.body.teachers
-            //여기 나중에 join문으로 바뀌면 원래대로 
+            //여기 나중에 join문으로 바뀌면 원래대로
             var sql = 'INSERT INTO teacher_student(student_id,teacher_id, student_name, school_id) values(?,?,?,?)'
             if(teachers.constructor === Array){
             for(var i= 0; i < teachers.length; i++){
@@ -2899,6 +2899,6 @@ app.get('/student',function(req,res){
   res.render('student');
 });
 
-app.listen(port, function() {
-  console.log('Listening on port ' + port)
+app.listen(3030, function() {
+  console.log('Listening on port 3030!');
 })
