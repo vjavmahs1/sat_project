@@ -6,6 +6,7 @@ html
     link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
     link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
     script(src="//code.jquery.com/jquery-1.12.3.js")
+    script(type='text/javascript', src='http://code.jquery.com/jquery-latest.js')
 
 
     //validate 기본
@@ -45,7 +46,7 @@ html
         p
 
         //수행 평가 목록
-        if ShowPerforms
+        if ShowPerforms.length != 0
 
           #accordion.panel-group
             each val, index in ShowPerforms
@@ -69,7 +70,7 @@ html
               .panel-heading
                 h4.panel-title
                   a(data-toggle='collapse', data-parent='#accordion', href='#collapse1') Please, insert data!
-              #collapse1.panel-collapse.collapse.in
+              #collapse1.panel-collapse.collapse
                 .panel-body
                   | NO DATA AVAILABLE
 

@@ -2270,12 +2270,12 @@ app.get('/performanceList', function(req, res){
       console.log(showPerforms_err);
       res.status(500).send('showPerforms_err Internal Server Error!');
     }else{
-      conn.query(getUserGroups,[res.locals.SESSIONUSER.role_id],function(getUserGroups_err, getUserGroups_rows){
+      conn.query(getUserGroups,[res.locals.SESSIONUSER.user_id],function(getUserGroups_err, getUserGroups_rows){
         if(getUserGroups_err){
           console.log(getUserGroups_err);
           res.status(500).send('getUserGroups_err Internal Server Error!');
         }else{
-          conn.query(getTeacherStudent,[res.locals.SESSIONUSER.role_id],function(getTeacherStu_err, getTeacherStu_rows){
+          conn.query(getTeacherStudent,[res.locals.SESSIONUSER.user_id],function(getTeacherStu_err, getTeacherStu_rows){
             if(getTeacherStu_err){
               console.log(getTeacherStu_err);
               res.status(500).send('getTeacherStu_err Internal Server Error!');
