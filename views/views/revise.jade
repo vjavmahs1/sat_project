@@ -1,0 +1,176 @@
+doctype html
+html(lang='en')
+  head
+    title 수행평가
+    meta(charset='utf-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    link(rel='stylesheet', href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css')
+    script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js')
+    script(src='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js')
+    style.
+      body {width:100%; margin:0 auto;}
+      #main {padding:2px;}
+      #main table {width:100%;}
+      #main table, th, td {border: 1px solid black;}
+      .container input {width: 100%; height: 100%; border: none; text-align:center;}
+      .container td {text-align: center; vertical-align: middle;}
+
+  body
+
+    include ./header.jade
+
+    #main(style='position:relative')
+      .container(style='margin:auto')
+        form(action='/revise/complete' method='post')
+          h4 과목:
+            input(type='text' name='subject_name' placeholder='00' style='width:50px' value='영어')
+          //div(style='position:absolute; right:75px;')
+            //input(type='text' name='grade' placeholder='00' style='width:30px' value='')
+            //| 학년
+            //input(type='text' name='group' placeholder='00' style='width:30px' value='')
+            //| 반
+          table(style='margin-top:40px').table.table-bordered
+            thead
+              tr
+                th.col-sm-2(style='text-align:center; background:lightgray') 학년학기
+                th.col-sm-2(style='text-align:center; background:lightgray') 교과
+                th.col-sm-2(style='text-align:center; background:lightgray') 단원명(영역)
+                th.col-sm-2(style='text-align:center; background:lightgray') 평가시기
+                th.col-sm-2(style='text-align:center; background:lightgray') 평가자
+
+            tbody
+              tr
+                td
+                  input(type='text' name='grade_semester'  value=GetPerforms[0].grade_semester placeholder='입력해주세요')
+                td
+                  input(type='text' name='subject' value=GetPerforms[0].subject_name placeholder='입력해주세요')
+                td
+                  input(type='text' name='name_of_section' value=GetPerforms[0].name_of_section placeholder='입력해주세요')
+                td
+                  input(type='text' name='term_of_assessment' value=GetPerforms[0].term_of_assessment placeholder='입력해주세요')
+                td
+                  input(type='text' name='grader' value=GetPerforms[0].grader placeholder='입력해주세요')
+
+          table.table.table-bordered
+            tbody
+              tr
+                th.col-sm-2(style='text-align:center; vertical-align:middle; background:lightgray') 평가문항
+                td(colspan='3')
+                  textarea(style='width:100%; height:100%; border:none' name='assessment_item' placeholder='입력해주세요')
+                    =value=GetPerforms[0].assessment_item
+              tr
+                th(style='text-align:center; vertical-align:middle; background:lightgray') 준비물
+                td(colspan='3')
+                  textarea(style='width:100%; height:100%; border:none' name='supply' placeholder='입력해주세요')
+                    =value=GetPerforms[0].supply
+              tr
+                th(style='text-align:center; vertical-align:middle; background:lightgray') 유의사항
+                td(colspan='3')
+                  textarea(style='width:100%; height:100%; border:none' name='caution_area' placeholder='입력해주세요')
+                    =value=GetPerforms[0].caution_area
+              tr
+                th(style='text-align:center; vertical-align:middle; background:lightgray') 공지여부
+                td(colspan='3')
+                  textarea(style='width:100%; height:100%; border:none' name='notice_or_not' placeholder='입력해주세요')
+                    =value=GetPerforms[0].notice_or_not
+              tr
+                th(style='text-align:center; vertical-align:middle; background:lightgray') 평가요소
+                td.col-sm-6
+                  textarea(style='width:100%; height:100%; border:none' name='assessment_factor' placeholder='입력해주세요')
+                    =value=GetPerforms[0].factor
+                  th.col-sm-2(style='text-align:center; vertical-align:middle; background:lightgray') 평가방법
+                  td
+                    input(type='text' name='assessment_way' value=GetPerforms[0].way placeholder='입력해주세요')
+
+
+          table#table3.table.table-bordered
+            tbody#tbody
+              tr(style='background:lightgray')
+                th.col-sm-12(style='text-align:center;vertical-align:middle') 평가 기준
+
+              each val, index in GetStands
+                tr(id='tr'+(index+1))
+                  td.col-sm-5
+                    textarea(style='width: 100%; height: 100%; border: none;' name='standard'+(index+1) id='standard'+(index+1) placeholder='입력해주세요')
+                      =val.contents
+
+
+            //
+              div
+                button.btn.btn-success(type='button', onclick='createItem()') 추가
+                button#deleteBtn.btn.btn-danger(type='button') 삭제
+
+          div(style='position: absolute; right:75px')
+            button.btn.btn-primary(type='submit' id='submit_btn') 수정완료
+
+          script.
+
+            //추가
+            function createItem(){
+            var tableLength = $('#table3 tr').length - 1;
+            var countTr = tableLength;
+            var countStandard = tableLength;
+
+            var tbody = document.getElementById("tbody");
+            var tr = document.createElement("tr");
+            tr.setAttribute("id",'tr' + (++countTr))
+
+            var td1 = document.createElement("td");
+            var textarea = document.createElement("textarea");
+            textarea.style.width = "100%";
+            textarea.style.height = "100%";
+            textarea.style.border = "none";
+            textarea.setAttribute("name","standard"+(++countStandard));
+            textarea.setAttribute("placeholder","입력해주세요");
+
+            td1.appendChild(textarea);
+            tr.appendChild(td1);
+            tbody.appendChild(tr);
+
+            }
+
+            //delete
+            $(document).ready(function(){
+            $("#deleteBtn").click(function(){
+            var length = $('#table3 tr').length - 1;
+            if(length == 1){
+            //stop. do not remove
+            }else{
+            $('#tr'+ length).remove();
+            }
+            });
+            });
+
+      p
+
+      footer
+      //
+        nav.navbar.navbar-default
+          .container-fluid
+            .navbar-header
+              a.navbar-brand(href='main_web') LINKS
+            ul.nav.navbar-nav
+              li
+                a(href='#') 학교소개
+              li
+                a(href='#') 연혁
+              li
+                a(href='#') 찾아오시는 길
+              li
+                a(href='#') 광고주모집
+
+
+      // Java Script
+      script.
+        function selectBox(check){
+        var boxes = document.getElementsByName(check.getAttribute("name"));
+        for(var i = 0; i < boxes.length; i++){
+        if(boxes[i].checked == true){
+        //alert(boxes[i].value);
+        boxes[i].checked = false;
+        }
+        }
+        check.checked = true;
+        }

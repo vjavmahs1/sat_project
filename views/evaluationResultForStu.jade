@@ -1,0 +1,168 @@
+doctype html
+html(lang='en')
+  head
+    title 학생평가결과
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+    script(type='text/javascript', src='http://code.jquery.com/jquery-latest.js')
+    script(src='//code.jquery.com/jquery.min.js')
+
+
+    //validate 기본
+    script(src ="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js")
+    //validate 외부 addMethod가져오기
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/additional-methods.min.js")
+
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    //datatables
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+
+    link(href="/multi-select/css/multi-select.css" rel="stylesheet" type="text/css")
+    script(src="/multi-select/js/jquery.multi-select.js")
+
+    style.
+      #textarea {border-radius: 10%}
+      #div_textarea {border-radius: 10%}
+      #chart {width: 100%;height: 100%;margin:30px auto 0;display: block;}
+      #chart #bars {display: inline-block;width: 100%;height: 100%;padding: 0;margin: 0 ;}
+      #chart #bars li {display: table-cell;width: 100px;height: 300px;margin: 0;text-align: center;position: relative;}
+      #chart #bars li .bar {display: block;width: 90px;margin-left: 415%;background: #49E;position: absolute;bottom: 0;}
+      #chart #bars li .bar:hover {background: #5AE;cursor: pointer;}
+      #chart #bars li .bar:hover:before {color: black;content: attr(data-percentage) '%';position: relative;bottom: 20px;}
+      #chart #bars li span {color: #eee;width: 100%;position: absolute;bottom: 0;left: 0;text-align: center;}
+
+  body
+    include ./header.jade
+
+    #main(style='margin:0 auto; width: 80%')
+      h2(id='h2') 수행평가 가정 통지표
+
+      p(style='float:right')
+        =student_name
+      p
+
+      div(id='div_textarea')
+        if ifExist
+          textarea#textarea(style='width:100%; height:180px;border:double 4px')
+        else
+          textarea#textarea(style='width:100%; height:180px;border:double 4px')
+            |      귀하의 수행평가는 아직 평가되지 않았습니다.
+
+      p
+      h3 ※ 과목별 성적
+      p(style='float:right') 파랑 : 학급평균 - 빨강: 본인평균
+      if ifExist
+        -var allSum = 0;
+        -var perSum = 0;
+        table(style='width:100%;border:3px black solid;')#subject_table
+          each valAll, indexAll in standard_all
+            if(valAll.score == 'EXCELLENT')
+              -allSum = allSum + 4;
+            if(valAll.score == 'GREAT')
+              -allSum = allSum + 3;
+            if(valAll.score == 'GOOD')
+              -allSum = allSum + 2;
+            if(valAll.score == 'BAD')
+              -allSum = allSum + 1;
+
+          each per1, indexPer1 in standard_per_stu
+            if(per1.score == 'EXCELLENT')
+              -perSum = perSum + 4;
+            if(per1.score == 'GREAT')
+              -perSum = perSum + 3;
+            if(per1.score == 'GOOD')
+              -perSum = perSum + 2;
+            if(per1.score == 'BAD')
+              -perSum = perSum + 1;
+
+
+
+          tr(style='height:210px;border:3px black solid; background-color:#F3FFFF')
+            td(style='border:3px black solid')
+              #chart
+                ul#bars
+                  li
+                    .bar(data-percentage=(allSum/(standard_all.length*4)*100).toFixed(1))
+                      span 평균
+                  li
+                    .bar(data-percentage=(perSum/(standard_per_stu.length*4)*100).toFixed(1) style='background-color:red')
+                      span 학생
+
+
+
+
+
+          tr(style='border:1px black solid')
+            th(style='text-align:center;') [영어]
+
+
+        p
+
+        table(style='width:100%;border:3px black solid')#contents_table
+          tr(style='border:3px black solid')
+            th(style='text-align:center;background-color:#FFF0F5' colspan='4') 종합결과
+          tr(style='border:1px black solid')
+            th(style='text-align:center;border:1px black solid; background-color:#FFEBF0') 매우우수
+            th(style='text-align:center;border:1px black solid; background-color:#00FF99') 우수
+            th(style='text-align:center;border:1px black solid;background-color:#99CCFF') 보통
+            th(style='text-align:center;border:1px black solid; background-color:#FFFFCC') 미흡
+          tr(style='border:1px black solid')
+            th(style='text-align:center;border:1px black solid; background-color:#FFEBF0')
+              if ((perSum/(standard_per_stu.length*4)*100).toFixed(1) >= 90)
+                span O
+            th(style='text-align:center;border:1px black solid; background-color:#00FF99')
+              if ((perSum/(standard_per_stu.length*4)*100).toFixed(1) <= 89 && (perSum/(standard_per_stu.length*4)*100).toFixed(1) >= 80)
+                span O
+            th(style='text-align:center;border:1px black solid; background-color:#99CCFF')
+              if ((perSum/(standard_per_stu.length*4)*100).toFixed(1) <= 79 && (perSum/(standard_per_stu.length*4)*100).toFixed(1) >= 70)
+                span O
+            th(style='text-align:center;border:1px black solid; background-color:#FFFFCC')
+              if ((perSum/(standard_per_stu.length*4)*100).toFixed(1) <= 69)
+                span O
+          tr(style='border:1px black solid')
+            td(style='height:150px;border:1px black solid; background-color:#FFEBF0')
+              textarea(style='width:100%; height:100%;border:none; background-color:#FFEBF0')
+                | 수행평가의 각 영역에 대한 성적이 매우 우수하며 인지,정의 영역의 능력과 성취의욕이 매우 높음.
+            td(style='border:1px black solid; background-color:#00FF99')
+              textarea(style='width:100%; height:100%;border:none; background-color:#00FF99')
+                | 수행평가의 각 영역에 대한 성적이 우수하며, 인지 및 정의적 능력이 바르게 정착됨.
+            td(style='border:1px black solid; background-color:#99CCFF')
+              textarea(style='width:100%; height:100%;border:none; background-color:#99CCFF')
+                | 수행평가의 각 영역에 대한 성적이 양호하나 꾸준히 노력하고 문제의 핵심파악하는 능력이 요구됨.
+            td(style='border:1px black solid; background-color:#FFFFCC')
+              textarea(style='width:100%; height:100%;border:none; background-color:#FFFFCC')
+                | 기초학력 부족으로 수행평가의 각 영역에 대한 성적이 부진하며 기초학력향상과 지속적인 노력이 필요함.
+
+      p
+      h3 ※ 의견란
+      p
+        table(style='width:100%')#opinion_table
+          tr(style='background-color:#FFFF99;border:1px black solid')
+            th(style='text-align:center;border:3px black solid') 담임
+            th(style='text-align:center;border:3px black solid') 학부모
+          tr(style='background-color:#FFFF99;border:3px black solid')
+            td(style='height:100px;border:3px black solid')
+              textarea(style='width:100%; height:100%;border:none; background-color:#FFFF99')
+            td(style='border:3px black solid')
+              textarea(style='width:100%; height:100%;border:none; background-color:#FFFF99')
+
+    script.
+      $(function(){
+      $("#bars li .bar").each(function(key, bar){
+      var percentage = $(this).data('percentage');
+      $(this).animate({
+      'height':percentage+'%'
+      }, 1000);
+      })
+      })
