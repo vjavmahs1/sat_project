@@ -1,0 +1,308 @@
+doctype html
+html
+  head
+    title 수행평가
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+    script(type='text/javascript', src='http://code.jquery.com/jquery-latest.js')
+
+
+    //validate 기본
+    script(src ="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js")
+    //validate 외부 addMethod가져오기
+    script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/additional-methods.min.js")
+
+    //select 테그 꾸며주는 bootstrap
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
+
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    //datatables
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+
+    link(href="/multi-select/css/multi-select.css" rel="stylesheet" type="text/css")
+    script(src="/multi-select/js/jquery.multi-select.js")
+
+
+  body
+    include ./header.jade
+
+    #main(style='margin:auto; width: 90%')
+      p
+      div(class="display nowrap" cellspacing="0" width="100%")
+        button(type="button" class="btn btn-info" id="makeperform" style="float: right;") 작성하기
+
+        //수행평가목록
+
+        .container
+        h2 수행 평가 목록
+        p
+
+        //수행 평가 목록
+        if ShowPerforms.length != 0
+
+          #accordion.panel-group
+            each val, index in ShowPerforms
+              .panel.panel-default
+                .panel-heading
+                  h4.panel-title
+                    a(data-toggle='collapse', data-parent='#accordion', href='#collapse'+(index+1))
+                      =val.id +'.'+val.subject_name
+                div(id='collapse'+(index+1) class='panel-collapse collapse')
+                  .panel-body(id='panel-body'+val.id)
+                    =(index+1)+'.' + val.subject_name
+                    div(style='float:right')
+
+                      button.btn.btn-success(type='button' onclick='revise(this)' id = val.id) 보기 및 수정
+                      button.btn.btn-danger(type='button' onclick='deleteBtn(this)' id = val.id) 삭제
+
+
+        else
+          #accordion.panel-group
+            .panel.panel-default
+              .panel-heading
+                h4.panel-title
+                  a(data-toggle='collapse', data-parent='#accordion', href='#collapse1') Please, insert data!
+              #collapse1.panel-collapse.collapse
+                .panel-body
+                  | NO DATA AVAILABLE
+
+        p
+        p
+        p
+
+        //학년반
+        .container
+
+        if GetUserGroups
+
+          -var array = new Array();
+          each valStuEval in studentEvaluation
+            -array.push(valStuEval.user_id);
+
+          h2 학년 / 반
+          each val, index in GetUserGroups
+            .panel-group
+              .panel.panel-default
+                .panel-heading
+                  h4.panel-title
+                    a(data-toggle='collapse', href='#collapse'+(val.name))
+                      =val.user_group_id+'. '+val.name
+                div(id='collapse'+(val.name) class='panel-collapse collapse')
+                  .panel-body
+                    div(style='float:right')
+                      //수행평가적용하고 학생평가하기 해야 됨.
+                      button.btn.btn-info(type='button' onclick='applyPerform(this)' id = val.user_group_id
+                      name=val.name users=val.users teacher_id=val.teacher_id) 수행평가적용
+                      button.btn.btn-danger(type='button' onclick='deletePerform(this)' id = val.user_group_id
+                      name=val.name users=val.users teacher_id=val.teacher_id) 적용한 평가삭제
+
+                    //수행평가 고르기
+                    div(style='float:right').col-sm-3
+                      select#class.form-control(name='performances')
+                        option 수행평가를 선택해주세요
+                        each variable, count in ShowPerforms
+                          option(value=variable.id)
+                            =variable.id
+
+
+                  each student, studentIndex in Students
+                    if(val.name == student[0].personal_id.substring(0,5))
+                      .panel-footer(id='panel-footer'+studentIndex)
+                        =student[0].user_id + '. ' + student[0].name
+                          div(style='float:right')
+                            if (array.indexOf(student[0].user_id) != -1)
+                              button.btn.btn-success.btn-xs(type='button' onclick='evaluationResult(this)' id = student[0].user_id
+                              name=student[0].name teacher_id=val.teacher_id, grade_class=val.name) 결과보기
+                              button.btn.btn-danger.btn-xs(type='button' onclick='evaluationDelete(this)' count=studentIndex id = student[0].user_id
+                              name=student[0].name teacher_id=val.teacher_id, grade_class=val.name) 평가삭제
+                            else
+                              button.btn.btn-warning.btn-xs(type='button' onclick='evaluateStudent(this)' id = student[0].user_id
+                              name=student[0].name teacher_id=val.teacher_id, grade_class=val.name) 평가하기
+
+
+        else
+          h2 Please. insert data!
+          ul.list-group
+            li.list-group-item
+              span.badge 12
+              |  수행평가를 작성해주세요
+
+
+  script.
+
+    $('#makeperform').click(function(){
+      location.href='/createPerformance';
+    })
+
+
+    function deleteBtn(deleteBtn){
+
+      var getId = deleteBtn.getAttribute('id');
+      $('#panel-body'+getId).remove();
+
+      $.ajax({
+      type: "POST",
+      url: "/delete",
+      data: {Id:getId},
+      success: function(data){
+        location.href='/performanceList'
+        alert('Success');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('DELETE'+err);
+        alert('There is an error!');
+      }
+      });
+
+      }
+
+    function revise(btn){
+      var _id = btn.getAttribute('id');
+
+      $.ajax({
+      type: "POST",
+      url: "/revise",
+      data: {id:_id},
+      success: function(data){
+      location.href='/revise';
+      alert('Success');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('There is an error!');
+      }
+      });
+      }
+
+    function applyPerform(applyBtn){
+    //필요없는 변수들
+      var user_group_id = applyBtn.getAttribute('id');
+      var grade_class = applyBtn.getAttribute('name');
+      var users = applyBtn.getAttribute('users');
+      var teacher_id = applyBtn.getAttribute('teacher_id');
+
+
+      //수행평가 번호
+      var id = document.getElementsByName('performances')[0].value;
+
+      $.ajax({
+      type: "POST",
+      url: '/seeThePerformanceForStu',
+      data: {Id:id},
+      success: function(data){
+      //location.href='/revise';
+      alert('이 반에 수행평가가 적용되었습니다!');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('applyPerform There is an error!');
+      }
+      });
+    }
+
+    function deletePerform(deletePerformBtn){
+
+      var user_group_id = deletePerformBtn.getAttribute('id');
+      var grade_class = deletePerformBtn.getAttribute('name');
+      var users = deletePerformBtn.getAttribute('users');
+      var teacher_id = deletePerformBtn.getAttribute('teacher_id');
+
+
+      $.ajax({
+      type: "POST",
+      url: '/deletePerform',
+      data: {user_group_Id:user_group_id, Users: users, teacher_Id: teacher_id,
+            grade_Class: grade_class},
+      success: function(data){
+      location.href='/performanceList';
+      alert('적용한 수행평가가 삭제 되었습니다. 작성한 학생들의 수행평가도 삭제됩니다. ');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('deletePerform Error!!!');
+      }
+      });
+
+    }
+
+
+    function evaluateStudent(evaluateBtn){
+      var student_id = evaluateBtn.getAttribute('id');
+      var student_name = evaluateBtn.getAttribute('name');
+      var students_teacher_id = evaluateBtn.getAttribute('teacher_id');
+      var grade_class = evaluateBtn.getAttribute('grade_class');
+
+
+      $.ajax({
+      type: "POST",
+      url: '/evaluateStudent',
+      data: {student_Id:student_id, student_Name: student_name, students_teacher_Id: students_teacher_id,
+            grade_Class: grade_class},
+      success: function(data){
+      location.href='/evaluateStudent';
+      //alert('Student Evaluation Success');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('학생들에게 적용했던 수행평가 번호를 선택해주세요!');
+      }
+      });
+
+    }
+
+    function evaluationResult(resultBtn){
+      var student_id = resultBtn.getAttribute('id');
+      var student_name = resultBtn.getAttribute('name');
+      var students_teacher_id = resultBtn.getAttribute('teacher_id');
+      var grade_class = resultBtn.getAttribute('grade_class');
+
+      $.ajax({
+      type: "POST",
+      url: '/evaluationResult',
+      data: {student_Id:student_id, student_Name: student_name, students_teacher_Id: students_teacher_id,
+            grade_Class: grade_class},
+      success: function(data){
+      location.href='/evaluationResult';
+      //alert('evaluationResult Success');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('evaluationResult Error!!');
+      }
+      });
+    }
+
+    function evaluationDelete(evalDeleteBtn){
+
+      var student_id = evalDeleteBtn.getAttribute('id');
+      var student_name = evalDeleteBtn.getAttribute('name');
+      var students_teacher_id = evalDeleteBtn.getAttribute('teacher_id');
+      var grade_class = evalDeleteBtn.getAttribute('grade_class');
+      var count = evalDeleteBtn.getAttribute('count');
+      //$('#panel-footer'+count).remove();
+
+      $.ajax({
+      type: "POST",
+      url: '/evaluationDelete',
+      data: {student_Id:student_id, student_Name: student_name, students_teacher_Id: students_teacher_id,
+            grade_Class: grade_class},
+      success: function(data){
+      location.href='/performanceList';
+      alert('이 학생에 대해 작성하셨던 데이터가 삭제됩니다.');
+
+      },
+      error: function(jqXHR, textStatus, err){
+        alert('evaluationDelete Error!!');
+      }
+      });
+
+    }

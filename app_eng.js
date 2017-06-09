@@ -8,7 +8,7 @@ var hasher = bkfd2Password();
 
 var bodyParser = require('body-parser');
 var app = express();
-var port = process.env.PORT || 3000;
+
 
 
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -20,8 +20,8 @@ app.use(session({
     host:'localhost',
     port:3306,
     user:'root',
-    password:'900620zZ.',
-    database:'eng'
+    password:'Dhtp12rbs.',
+    database:'sat_performance'
   })
 }));
 app.use(passport.initialize());
@@ -99,8 +99,8 @@ var conn = mysql.createConnection({
   host     : 'localhost',
   port     : '3306',
   user     : 'root',
-  password : '900620zZ.',
-  database : 'eng',
+  password : 'Dhtp12rbs.',
+  database : 'sat_performance',
   dateStrings: true
 });
 
@@ -391,13 +391,14 @@ app.post('/signup', function(req, res){
           if(req.body.teachers){
             console.log(req.body);
             var teachers = req.body.teachers
-            var sql = 'INSERT INTO teacher_student(student_id,teacher_id) values(?,?)'
+            //여기 나중에 join문으로 바뀌면 원래대로
+            var sql = 'INSERT INTO teacher_student(student_id,teacher_id, student_name, school_id) values(?,?,?,?)'
             if(teachers.constructor === Array){
             for(var i= 0; i < teachers.length; i++){
               (function() {
                 var j = i;
                 console.log("you have multiple teachers");
-                conn.query(sql, [user.insertId, teachers[j]],function(err,results){
+                conn.query(sql, [user.insertId, teachers[j],req.body.userName,req.body.schoolId],function(err,results){
                   if(err){
                     console.log(err);
                     res.status(500).send("Internal Server Error")
@@ -2426,6 +2427,649 @@ app.get('/listening/set/:id/preview', function(req, res){
 })
 
 
-app.listen(port, function() {
-  console.log('Listening on port ' + port)
+//오세균
+app.get('/performanceList', function(req, res){
+
+
+  var showPerforms = 'select * from assessment_main';
+  var getUserGroups = 'select * from user_group where teacher_id=?';
+  var getTeacherStudent = 'select * from teacher_student where teacher_id=?'
+  var getStudentsBelongToTeacher = 'select * from user where user_id=?'
+  var getStudentEvaluation = 'select user_id from studentEvaluation';
+  conn.query(showPerforms, function(showPerforms_err, showPerforms_rows){
+    if(showPerforms_err){
+      console.log(showPerforms_err);
+      res.status(500).send('showPerforms_err Internal Server Error!');
+    }else{
+      conn.query(getUserGroups,[res.locals.SESSIONUSER.user_id],function(getUserGroups_err, getUserGroups_rows){
+        if(getUserGroups_err){
+          console.log(getUserGroups_err);
+          res.status(500).send('getUserGroups_err Internal Server Error!');
+        }else{
+          conn.query(getTeacherStudent,[res.locals.SESSIONUSER.user_id],function(getTeacherStu_err, getTeacherStu_rows){
+            if(getTeacherStu_err){
+              console.log(getTeacherStu_err);
+              res.status(500).send('getTeacherStu_err Internal Server Error!');
+            }else{
+              //console.log(getTeacherStu_rows[0].student_id + '[[[[]]]]'+getTeacherStu_rows[1].student_id)
+              var array = new Array();
+              var counter = 0;
+              for(var i in getTeacherStu_rows){
+                conn.query(getStudentsBelongToTeacher,[getTeacherStu_rows[i].student_id],function(students_err, students_rows){
+                  if(students_err){
+                    //console.log('여기서 걸리냐??');
+                    console.log(students_err);
+                    res.status(500).send('students_err Internal Server Error!')
+                  }else{
+                    counter++;
+                    array.push(students_rows);
+                    if(counter == getTeacherStu_rows.length){
+                      //console.log('this is array!!!!!!!AADSFAS!!!!');
+                      //console.log(array);
+                      conn.query(getStudentEvaluation,function(getStuEvalErr,getStuEvalRows){
+                        if(getStuEvalErr){
+                          console.log(getStuEvalErr);
+                          res.status(500).send('getStuEvalErr');
+                        }else{
+                          //console.log('getStuEvalRows');
+                          //console.log(getStuEvalRows[0].user_id);
+                          res.render('performanceList',{ShowPerforms: showPerforms_rows, GetUserGroups: getUserGroups_rows
+                                                    ,Students: array, studentEvaluation: getStuEvalRows, teacherStu: getTeacherStu_rows});
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+            }
+          });
+        }
+      });
+    }
+  });
+});
+
+
+//문제생성버튼 클릭시 작성표
+app.get('/createPerformance', function(req, res){
+  var getUser ="select * from user where auth_id = ?"
+  conn.query(getUser, req.session.passport.user, function(err, user){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error')
+    }else{
+      res.render('createPerformance', {teacherName : user[0].name});
+
+    }
+  })
+
+});
+
+//'performance'에서 submit버튼 눌렀을때 db 저장
+app.post('/createPerformance/add', function(req, res){
+
+  //top
+  var subject_top = req.body.subject_name.trim();
+  //var grade = req.body.grade.trim();
+  //var _class = req.body.group.trim();
+  var grade_semester = req.body.grade_semester.trim();
+  var subject = req.body.subject.trim();
+  var name_of_section = req.body.name_of_section.trim();
+  var term_of_assessment = req.body.term_of_assessment.trim();
+  var grader = req.body.grader;
+  console.log('grader'+grader);
+
+  //middle
+  var assessment_item = req.body.assessment_item.trim();
+  var supply = req.body.supply.trim();
+  var caution_area = req.body.caution_area.trim();
+  var notice_or_not = req.body.notice_or_not.trim();
+  var factor = req.body.assessment_factor.trim();
+  var way = req.body.assessment_way.trim();
+
+  //bottom
+  var standard1 = req.body.standard1;
+  var standard2 = req.body.standard2;
+  var standard3 = req.body.standard3;
+  var standard4 = req.body.standard4;
+  var standard5 = req.body.standard5;
+  var standard6 = req.body.standard6;
+  var standard7 = req.body.standard7;
+  var standard8 = req.body.standard8;
+  var standard9 = req.body.standard9;
+  var standard10 = req.body.standard10;
+
+
+  var standardArray = new Array();
+
+  if(standard1 !== undefined){
+    standardArray.push(standard1.trim());
+  }if(standard2 !== undefined){
+    standardArray.push(standard2.trim());
+  }if(standard3 !== undefined){
+    standardArray.push(standard3.trim());
+  }if(standard4 !== undefined){
+    standardArray.push(standard4.trim());
+  }if(standard5 !== undefined){
+    standardArray.push(standard5.trim());
+  }if(standard6 !== undefined){
+    standardArray.push(standard6.trim());
+  }if(standard7 !== undefined){
+    standardArray.push(standard7.trim());
+  }if(standard8 !== undefined){
+    standardArray.push(standard8.trim());
+  }if(standard9 !== undefined){
+    standardArray.push(standard9.trim());
+  }if(standard10 !== undefined){
+    standardArray.push(standard10.trim());
+  }
+
+
+    var main_sql =
+    'INSERT INTO assessment_main (grade_semester,subject_name,name_of_section,'+
+      'term_of_assessment,grader,assessment_item,supply,caution_area,notice_or_not,factor,way) VALUES(?,?,?,?,?,?,?,?,?,?,?)';
+    conn.query(main_sql, [grade_semester, subject, name_of_section,term_of_assessment,grader,
+      assessment_item,supply,caution_area,notice_or_not,factor,way], function(err, result){
+      if(err){
+        console.log(err);
+        res.status(500).send('Internal Server Error!1');
+      }else{
+        //inser to assessment_standard
+        var assessment_sql ='INSERT INTO assessment_standard (id_contents, contents) VALUES(?,?)';
+          for(var i in standardArray){
+          //console.log(standard0+', '+standard1+', '+standard2);
+            conn.query(assessment_sql, [result.insertId,standardArray[i]],function(err1, result2){
+            if(err1){
+              console.log(err1);
+              res.status(500).send('Internal Server Error!2');
+            }else{
+
+            }
+          });
+        }
+        res.redirect('/performanceList');
+      }
+    });
+});
+
+
+//수행평가 삭제
+app.post('/delete', function(req, res){
+
+  var id = req.body.Id
+
+  var deletePerform = 'delete from assessment_main where id=?';
+  var deleteStand = 'delete from assessment_standard where id_contents=?'
+
+  conn.query(deletePerform,[id],function(deleteP_err,deleteP_rows){
+    if(deleteP_err){
+      console.log(deleteP_err);
+      res.status(500).send('deleteP_err Internal Server Error!');
+    }else{
+      conn.query(deleteStand,[id],function(deleteStand_err, deleteStand_rows){
+        if(deleteStand_err){
+          console.log(deleteStand_err);
+          res.status(500).send('deleteStand_err Internal Server Error!');
+        }else{
+
+        }
+      })
+      res.redirect('/performanceList');
+    }
+  });
+});
+
+//수행평가 수정
+
+var id;
+app.post('/revise', function(req, res){
+
+  id = req.body.id;
+  res.redirect('/revise');
+
+});
+
+app.get('/revise', function(req, res){
+  //console.log('This is invoked right after app.post() is called');
+
+  var getPerforms = 'SELECT * FROM assessment_main WHERE id=?';
+  var getStands = 'SELECT * FROM assessment_standard WHERE id_contents=?'
+
+  conn.query(getPerforms, [id],function(getPerforms_err, getPerforms_rows){
+
+    if(getPerforms_err){
+      console.log(getPerforms_err);
+      res.status(500).send('Internal Server Error!');
+    }else{
+      conn.query(getStands, [id], function(getStands_err, getStands_rows){
+        if(getStands_err){
+          console.log(getStands_err);
+          res.status(500).send('Internal Server Error!');
+        }else{
+          res.render('revise', {GetPerforms: getPerforms_rows, GetStands: getStands_rows});
+          //console.log(rows1);
+        }
+      });
+    }
+  });
+});
+
+app.post('/revise/complete', function(req, res){
+
+
+  console.log('id is= '+id);
+  //var grade = req.body.grade.trim();
+  //var _class = req.body.group.trim();
+  var grade_semester = req.body.grade_semester.trim();
+  var subject = req.body.subject.trim();
+  var name_of_section = req.body.name_of_section.trim();
+  var term_of_assessment = req.body.term_of_assessment.trim();
+  var grader = req.body.grader.trim();
+
+  //database table: below_sci;
+  var assessment_item = req.body.assessment_item.trim();
+  var supply = req.body.supply.trim();
+  var caution_area = req.body.caution_area.trim();
+  var notice_or_not = req.body.notice_or_not.trim();
+  var factor = req.body.assessment_factor.trim();
+  var way = req.body.assessment_way.trim();
+  var standard1 = req.body.standard1;
+  var standard2 = req.body.standard2;
+  var standard3 = req.body.standard3;
+  var standard4 = req.body.standard4;
+  var standard5 = req.body.standard5;
+  var standard6 = req.body.standard6;
+  var standard7 = req.body.standard7;
+  var standard8 = req.body.standard8;
+  var standard9 = req.body.standard9;
+  var standard10 = req.body.standard10;
+
+  var arr = new Array();
+
+  if(standard1 !== undefined){
+    arr.push(standard1.trim());
+  }if(standard2 !== undefined){
+    arr.push(standard2.trim());
+  }if(standard3 !== undefined){
+    arr.push(standard3.trim());
+  }if(standard4 !== undefined){
+    arr.push(standard4.trim());
+  }if(standard5 !== undefined){
+    arr.push(standard5.trim());
+  }if(standard6 !== undefined){
+    arr.push(standard6.trim());
+  }if(standard7 !== undefined){
+    arr.push(standard7.trim());
+  }if(standard8 !== undefined){
+    arr.push(standard8.trim());
+  }if(standard9 !== undefined){
+    arr.push(standard9.trim());
+  }if(standard10 !== undefined){
+    arr.push(standard10.trim());
+  }
+
+  var sql = 'UPDATE assessment_main SET grade_semester=?,subject_name=?,name_of_section=?,'+
+  'term_of_assessment=?,grader=?,assessment_item=?,supply=?,caution_area=?,notice_or_not=?,factor=?,way=?'+
+  'WHERE id=?';
+
+  conn.query(sql, [grade_semester,subject,name_of_section,term_of_assessment,
+    grader,assessment_item,supply,caution_area,notice_or_not,factor,way,id],function(err, rows){
+
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error!');
+    }else{
+
+      var select = 'SELECT id FROM assessment_standard WHERE id_contents=?';
+
+      conn.query(select, [id], function(err1, rows1){
+        if(err1){
+          console.log(err1);
+          res.status(500).send('Internal Server Error!');
+        }else{
+            console.log(rows1);
+
+            for(var i in rows1){
+              //console.log(rows[i].id + ' & ' + arr[i]);
+              iterateDB(rows1[i].id, arr[i]);
+            }
+
+        }
+      });
+
+      res.redirect('/performanceList');
+    }
+  });
+
+  //user function
+  function iterateDB(id, element){
+    //console.log('hello iterateDB!');
+    //console.log(results.length);//correct
+    var standard ='UPDATE assessment_standard SET contents=? WHERE id=?';
+    //수행평가 수정에서 평가기준을 추가/삭제시 DB도 삭제되거나 수정되어야 함.
+
+    conn.query(standard, [element, id], function(err, rows){
+      if(err){
+        console.log(err);
+        res.status(500).send('Internal Server Error!');
+      }else{
+
+      }
+    });
+  }
+
+});
+
+//student 로그인시만 볼수 있음
+//수행평가적용 버튼
+
+var idToGetPerformFromTeacher;//수행평가번호 in this variable 수행평가적용버튼을 누르기 전까진 값이 바뀌지 않음.
+
+
+//수행평가적용버튼 누르면 실행, 학생이 로그인해서 수행평가 볼수 있는 라우터
+app.post('/seeThePerformanceForStu', function(req,res){
+    idToGetPerformFromTeacher = req.body.Id;//수행평가 번호
+    console.log('POST: seeThePerformance' + idToGetPerformFromTeacher)
+    res.redirect('/seeThePerformanceForStu');
+
+});
+
+app.get('/seeThePerformanceForStu', function(req,res){
+  console.log('GET: seeThePerformance' + idToGetPerformFromTeacher)
+
+  var main = 'select * from assessment_main where id=?'
+  var standard = 'select * from assessment_standard where id_contents=?'
+
+  conn.query(main,[idToGetPerformFromTeacher],function(main_err,main_rows){
+    if(main_err){
+      console.log(main_err);
+      res.status(500).send('main_err Internal Server Error!');
+    }else{
+      conn.query(standard,[idToGetPerformFromTeacher],function(standard_err, standard_rows){
+        if(standard_err){
+          console.log(standard_err);
+          res.status(500).send('standard_err Internal Server Error!');
+        }else{
+          //console.log('main' + main_rows[0] + ' --- ' + standard_rows)
+          res.render('seeThePerformanceForStu',{Main_rows: main_rows,Standard_rows :standard_rows});
+        }
+      })
+
+    }
+  })
+
+});
+
+//학생입장에서 자기 성적보기
+app.get('/my_transcript', function(req,res){
+
+  var student_id = res.locals.SESSIONUSER.user_id;
+  console.log('my_transcript student_id ' + student_id);
+  var getStudentEvaluation = 'select * from studentEvaluation where user_id=?'
+  var evaluation_standard_all = 'select * from evaluation_standard where performance_id=? AND grade_class=?'
+  var evaluation_standard_ofStu = 'select * from evaluation_standard where performance_id=? AND grade_class=? AND student_name=?'
+
+  conn.query(getStudentEvaluation,[student_id],function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('my_transcript Error!');
+    }else{
+      if(rows.length == 0){//존재하지 않으면
+        res.render('evaluationResultForStu',{student_name: res.locals.SESSIONUSER.name, ifExist: false})
+      }else{//존재하면
+          conn.query(evaluation_standard_all,[rows[0].performance_id,rows[0].grade_class],function(err1,rows1){
+            if(err1){
+              console.log(err1);
+              res.status(500).send('evaluationStandardAll Error! my_transcript');
+            }else{
+              conn.query(evaluation_standard_ofStu,[rows[0].performance_id,rows[0].grade_class,rows[0].student_name],function(err2,rows2){
+                if(err2){
+                  console.log(err2);
+                  res.status(500).send('evaluationResultStandardOfStu Error! my_transcript');
+                }else{
+                  res.render('evaluationResultForStu',{standard_all:rows1,standard_per_stu:rows2,student_name:rows[0].student_name,ifExist: true});
+                }
+              });
+            }
+          });
+      }
+    }
+  });
+});
+
+
+
+var student_id = 0;
+var student_name = null;
+var students_teacher_id = 0;
+var grade_class = null;
+
+//학생에 대한 수행평가 작성하기
+app.post('/evaluateStudent', function(req, res){
+  student_id = req.body.student_Id;
+  student_name =req.body.student_Name;
+  students_teacher_id = req.body.students_teacher_Id;
+  grade_class = req.body.grade_Class;
+  res.redirect('/evaluateStudent');
+});
+
+app.get('/evaluateStudent', function(req, res){
+  var getTeacherName = 'select name,personal_id from user where user_id=?';
+  var getPerforms = 'SELECT * FROM assessment_main WHERE id=?';
+  var getStands = 'SELECT * FROM assessment_standard WHERE id_contents=?'
+
+  conn.query(getTeacherName,[students_teacher_id], function(Teacher_name_err, Teacher_name_rows){
+    if(Teacher_name_err){
+      console.log(Teacher_name_err);
+      res.status(500).send('Teacher_name_err Error!');
+    }else{
+      conn.query(getPerforms,[idToGetPerformFromTeacher], function(getPerforms_err, getPerforms_rows){
+        if(getPerforms_err){
+          console.log(getPerforms_err);
+          res.status(500).send('getPerforms_err Error!11111');
+        }else{
+          conn.query(getStands,[idToGetPerformFromTeacher], function(getStands_err, getStands_rows){
+            if(getStands_err){
+              console.log(getStands_err);
+              res.status(500).send('getStands_err Error2222222');
+            }else{
+              res.render('studentEvaluation',{student_Name: student_name, teacher_name: Teacher_name_rows,
+                                              teacher_id:students_teacher_id ,grade: grade_class.substring(0,1), _class:grade_class.substring(3,4),
+                                            GetPerforms:getPerforms_rows, GetStands: getStands_rows});
+            }
+        });
+      }
+    });
+  }
+  });
+
+
+});
+
+//선생님이 학생의 수행평가 결과에 대해 점수를 매기고 저장하는 라우터
+app.post('/evaluateStudent/add', function(req, res){
+  var performance_id = idToGetPerformFromTeacher;
+  var student_name = req.body.student_name.trim()
+  var gradeclass = req.body.grade+'학년'+req.body.group+'반';
+  var grader = req.body.grader;
+  var teacher_id = req.body.teacher_id;
+
+  var box1 = req.body.box1;
+  var box2 = req.body.box2;
+  var box3 = req.body.box3;
+  var box4 = req.body.box4;
+  var box5 = req.body.box5;
+  var boxes = new Array();
+
+  var standard1 = req.body.standard1;
+  var standard2 = req.body.standard2;
+  var standard3 = req.body.standard3;
+  var standard4 = req.body.standard4;
+  var standard5 = req.body.standard5;
+  var standards = new Array();
+
+  if(box1 !== undefined&&standard1 !== undefined){
+    boxes.push(box1);
+    standards.push(standard1.trim())
+  }if(box2 !== undefined&&standard2 !== undefined){
+    boxes.push(box2);
+    standards.push(standard2.trim())
+  }if(box3 !== undefined&&standard3 !== undefined){
+    boxes.push(box3);
+    standards.push(standard3.trim())
+  }if(box4 !== undefined&&standard4 !== undefined){
+    boxes.push(box4);
+    standards.push(standard4.trim())
+  }if(box5 !== undefined&&standard5 !== undefined){
+    boxes.push(box5);
+    standards.push(standard5.trim())
+  }
+
+  var selectTeacher_Student = 'select * from teacher_student where teacher_id=? AND student_name=?'
+  var selectStuEval = 'select * from studentEvaluation where performance_id=? AND student_name=? AND grade_class=? AND grader=?';
+  var selectEvalStands = 'select * from evaluation_standard where performance_id=? AND student_name=? AND grade_class=? AND grader=?'
+  var studentEvaluation = 'INSERT INTO studentEvaluation (performance_id,student_name,grade_class,grader,user_id) VALUES(?,?,?,?,?)';
+  var evaluation_standard ='INSERT INTO evaluation_standard (performance_id,contents,score,grade_class,student_name,grader) VALUES(?,?,?,?,?,?)';
+
+  conn.query(selectTeacher_Student,[teacher_id,student_name],function(selTeaStuErr, selTeaStuRows){
+    if(selTeaStuErr){
+      console.log(selTeaStuErr);
+      res.status(500).send('selTeaStuErr Error!');
+    }else{
+      conn.query(selectStuEval,[performance_id,student_name,gradeclass,grader],function(err, rows){
+        if(err){
+          console.log(err);
+          res.status(500).send('selectStuEvalErr Error!');
+        }else{
+          if(rows.length != 0){//DB에 이미 존재하면
+            res.send('<script type="text/javascript">alert("이미 존재 하는 수행평가 데이터 입니다.!");</script>');
+          }else{//존재하지 않으면
+            conn.query(studentEvaluation, [performance_id,student_name,gradeclass,grader,selTeaStuRows[0].student_id], function(studentEvaluation_err,studentEvaluation_result){
+              if(studentEvaluation_err){
+                console.log(studentEvaluation_err);
+                res.status(500).send('studentEvaluation_err Internal Server Error!1');
+              }else{
+                for(var i in standards){
+                  conn.query(evaluation_standard, [performance_id,standards[i],boxes[i],gradeclass,student_name,grader],
+                    function(evaluation_standard_err, evaluation_standard_result){
+                  if(evaluation_standard_err){
+                    console.log(evaluation_standard_err);
+                    res.status(500).send('evaluation_standard_err Internal Server Error!2');
+                  }
+                  });
+                }
+              res.redirect('/performanceList');
+              }
+            });
+          }
+        }
+      })
+    }
+  })
+});
+
+
+//학생평가결과
+
+var stu_name_for_eval_result;
+var stu_grade_class_for_eval_result;
+
+app.post('/evaluationResult', function(req, res){
+  stu_name_for_eval_result = req.body.student_Name;
+  stu_grade_class_for_eval_result = req.body.grade_Class;
+  res.redirect('/evaluationResult');//이거 없으면 밑에게 실행 안됨.
+});
+
+app.get('/evaluationResult', function(req, res){
+
+  var studentEvaluation = 'select * from studentEvaluation where student_name=? AND grade_class=?';
+  //더 명확하게 하려면 studentEvaluation DB에 teacher_id and school_id 있으면 좋을 듯.
+  var evaluation_standard_all = 'select * from evaluation_standard where performance_id=? AND grade_class=?'
+  var evaluation_standard_ofStu = 'select * from evaluation_standard where performance_id=? AND grade_class=? AND student_name=?'
+
+  conn.query(studentEvaluation,[stu_name_for_eval_result, stu_grade_class_for_eval_result],function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('evaluationResult Internal Server Error!');
+    }else{
+      conn.query(evaluation_standard_all,[rows[0].performance_id,rows[0].grade_class],function(err1,rows1){
+        if(err1){
+          console.log(err1);
+          res.status(500).send('evaluationStandardAll Error!!!');
+        }else{
+          conn.query(evaluation_standard_ofStu,[rows[0].performance_id,rows[0].grade_class,stu_name_for_eval_result],function(err2,rows2){
+            if(err2){
+              console.log(err2);
+              res.status(500).send('evaluationResultStandardOfStu Error!!');
+            }else{
+              //console.log('aaaa'+rows1.length +'bbb'+rows2.length)
+              res.render('evaluationResult',{standard_all:rows1,standard_per_stu:rows2,student_name:stu_name_for_eval_result});
+            }
+          });
+        }
+      });
+
+    }
+  });
+
+});
+//학생을 평가한걸 지우는 라우터
+app.post('/evaluationDelete', function(req, res){
+  var student_id = req.body.student_Id;
+  var student_name =req.body.student_Name;
+  var students_teacher_id = req.body.students_teacher_Id;
+  var grade_class = req.body.grade_Class;
+
+  var delStuEval = 'delete from studentEvaluation where student_name=? AND grade_class=?'
+  var delEvalStands = 'delete from evaluation_standard where student_name=? AND grade_class=?'
+
+  conn.query(delStuEval,[student_name,grade_class],function(delStuEvalErr, delStuEvalRows){
+    if(delStuEvalErr){
+      console.log(delStuEvalErr);
+      res.status(500).send('delStuEvalErr Error!');
+    }else{
+      conn.query(delEvalStands,[student_name, grade_class], function(delEvalStandsErr, delEvalStandsRows){
+        if(delEvalStandsErr){
+          console.log(delEvalStandsErr);
+          res.status(500).send('delEvalStandsErr Error!!');
+        }else{
+          res.redirect('/performanceList');
+        }
+      })
+    }
+  });
+});
+
+//그 반에 적용된 수행평가 지우는 라우터
+app.post('/deletePerform', function(req,res){
+
+  var grade_class = req.body.grade_Class;
+  var delStuEvalPerform = 'delete from studentEvaluation where performance_id=? AND grade_class=?'
+  var delEvalStandsPerform = 'delete from evaluation_standard where performance_id=? AND grade_class=?'
+
+  conn.query(delStuEvalPerform,[idToGetPerformFromTeacher, grade_class],function(err,rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('delStuEvalPerformErr Error!!!!');
+    }else{
+      conn.query(delEvalStandsPerform,[idToGetPerformFromTeacher, grade_class], function(err1, rows1){
+        if(err1){
+          console.log(err1);
+          res.status(500).send('delEvalStandsPerformErr Error!');
+        }else{
+          idToGetPerformFromTeacher = 0;
+          res.redirect('/performanceList');
+        }
+      })
+    }
+  })
+
+});
+
+app.get('/student',function(req,res){
+  res.render('student');
+});
+
+app.listen(3030, function() {
+  console.log('Listening on port 3030!');
 })

@@ -4,41 +4,41 @@ html
     meta=(charset="utf-8")
     link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
     link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
-    script(src="//code.jquery.com/jquery-1.12.3.js")
-    
+    script(type='text/javascript', src='http://code.jquery.com/jquery-latest.js')
+
 
     //validate 기본
     script(src ="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js")
     script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/jquery.validate.min.js")
     //validate 외부 addMethod가져오기
     script(src ="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.15.0/additional-methods.min.js")
-    
+
     //select 테그 꾸며주는 bootstrap
     script(src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/js/bootstrap-select.min.js")
-    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")  
+    link(rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.10.0/css/bootstrap-select.min.css")
 
     //bootstrap
     link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
     script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
-    //datatables    
-    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")   
+    //datatables
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")
     link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
     link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
-        
+
     link(href="/multi-select/css/multi-select.css" rel="stylesheet" type="text/css")
     script(src="/multi-select/js/jquery.multi-select.js")
-    
 
-    
+
+
   body
     include ./header.jade
     div(class="well well-lg" id="groupView")
       div(class="well" style="background-color: white;")
         div(class="row")
-          div(class="col-sm-4 col-md-3 sidebar")    
+          div(class="col-sm-4 col-md-3 sidebar")
             div(class="list-group")
               span(href="#" class="list-group-item") 그룹 / 반
-                span(class="pull-right" id="slide-submenu") 
+                span(class="pull-right" id="slide-submenu")
                   button("btn btn-sm" data-toggle="modal" data-target="#addModal") +
                   div(id="addModal" class="modal fade" role="dialog")
                     div(class="modal-dialog")
@@ -47,7 +47,7 @@ html
                           button(type="button" class="close" data-dismiss="modal") &times;
                           h4(class="modal-title") 그룹 생성
                         div(class="modal-body")
-                          form(type="post" method="POST" id ="addGroup" class="valid" action="/add/group" data-id =user.user_id) 
+                          form(type="post" method="POST" id ="addGroup" class="valid" action="/add/group" data-id =user.user_id)
                             div(class="form-group")
                               label 그룹명
                               input(type="text" name ="groupName" class="form-control" id="groupName")
@@ -59,39 +59,39 @@ html
                               select(id='selectedStudnets' multiple='multiple' name ="studentId" class="multiSel")
                                 each takenStudent in takenStudents
                                   - var optGroup = takenStudent.personal_id.substring(0, takenStudent.personal_id.indexOf("반")+1);
-                                  - var studentNum = takenStudent.personal_id.substring(takenStudent.personal_id.indexOf("반")+1, takenStudent.personal_id.length)    
+                                  - var studentNum = takenStudent.personal_id.substring(takenStudent.personal_id.indexOf("반")+1, takenStudent.personal_id.length)
                                   optgroup(label=optGroup)
                                     option(value=takenStudent.student_id)=takenStudent.name+" ("+studentNum+")"
-                            
+
                             br
                             button(type="submit" id="addBtn")
-                              
-                                  
-              a(class="list-group-item active" id="total" href="/groups") 전체학생 
-                span(class="badge")=takenStudents.length    
+
+
+              a(class="list-group-item active" id="total" href="/groups") 전체학생
+                span(class="badge")=takenStudents.length
               each group in groups
                 a(class="list-group-item side" href="/group/"+group.user_group_id data-id =group.user_group_id  id="row"+group.user_group_id)=group.group_name
                   span(class="badge")=group.users
-          
+
           span(class="pull-right" id = "tableSpan")
-            h3 전체학생           
+            h3 전체학생
             table(id="table" class="display" cellspacing="0")
               thead
                 tr
-                  th 이름 
+                  th 이름
                   th 학번
                   th Email
-                    
+
               tfoot
                 tr
                   th
                     button(class="btn btn-info btn-sm" style="float: right;" id ="makeExam") 시험생성
-                         
+
               tbody(class ="showBtn")
                 each takenStudent in takenStudents
                   tr(class="tr" data-id = takenStudent.user_id)
                     td=takenStudent.name
-                    td=takenStudent.personal_id 
+                    td=takenStudent.personal_id
                     td=takenStudent.email
                       button(id=takenStudent.user_id class="pull-right deleteUser" data-id=takenStudent.user_id data-teacher=takenStudent.teacher_id data-toggle="modal" data-target="#myModal"+takenStudent.user_id) x
                       div(id="myModal"+takenStudent.user_id class="modal fade" role="dialog")
@@ -99,10 +99,10 @@ html
                           div(class="modal-content")
                             div(class="modal-header")
                               button(type="button" class="close" data-dismiss="modal") &times;
-                              h4(class="modal-title") 유저 삭제      
+                              h4(class="modal-title") 유저 삭제
                             div(class="modal-body")
-                              form(role ="form" method="POST" id ="target")    
-                                p=takenStudent.name+" 학생을 전체학생 그룹에서 삭제하시겠습니까?"     
+                              form(role ="form" method="POST" id ="target")
+                                p=takenStudent.name+" 학생을 전체학생 그룹에서 삭제하시겠습니까?"
                               div(class="modal-footer")
                                 button(type="button"  data-dismiss="modal") 취소
                                 button(type="button"  id ="dele"+takenStudent.user_id  data-dismiss="modal" data-backdrop="false") 삭제
@@ -117,11 +117,11 @@ html
                   type : "POST",
                   url: "groupName/check"
                 }
-                
+
               },
               studentId : {
                 needsSelection : true
-              }              
+              }
             },
             messages : {
               groupName : {
@@ -141,15 +141,15 @@ html
         "scrollY": "450px",
         "width" : "600px",
         "scrollCollapse": true,
-        "bInfo" : false      
+        "bInfo" : false
         });
         $('#selectedStudnets').multiSelect({ selectableOptgroup: true });
         $('#MselectedStudnets').multiSelect({ selectableOptgroup: true });
 
-        
-        
-      })     
-      
+
+
+      })
+
       //addGroup
       $(document).on("submit", "#addGroup", function(event){
         event.preventDefault();
@@ -175,15 +175,15 @@ html
               "scrollY": "450px",
               "width" : "600px",
               "scrollCollapse": true,
-              "bInfo" : false   
-            });            
+              "bInfo" : false
+            });
             $(".active").removeClass("active")
             var maxValue =0;
               $(".side").each(function(){
                 var value = $(this).data('id');
                 if(value > maxValue){
                   maxValue = value;
-                }              
+                }
               })
             $("#row"+maxValue).addClass("active")
             $('#addModal').modal('hide');
@@ -196,9 +196,9 @@ html
 
 
           }
-        })  
-      })  
-      
+        })
+      })
+
       $(document).on("submit", "#modifyGroup", function(event){
         event.preventDefault();
         var groupId = $(this).data('id');
@@ -208,7 +208,7 @@ html
         console.log($('#MselectedStudnets').val());
         optionValues = JSON.stringify($('#MselectedStudnets').val())
         console.log(optionValues);
-        
+
         var url = $(this).attr('action');
         $.ajax({
           url : url,
@@ -223,27 +223,27 @@ html
               "scrollY": "450px",
               "width" : "600px",
               "scrollCollapse": true,
-              "bInfo" : false   
+              "bInfo" : false
             });
             if(groupId){
               $(".active").removeClass("active")
               $("#row"+groupId).addClass("active")
               console.log(groupId);
             }else{
-              $("#total").addClass("active")  
+              $("#total").addClass("active")
             }
             $('.modal').modal('hide');
             $('body').removeClass('modal-open');
             $('.modal-backdrop').remove();
-            
+
             $('#selectedStudnets').multiSelect({ selectableOptgroup: true });
             $('#MselectedStudnets').multiSelect({ selectableOptgroup: true });
             validate();
 
           }
-        })  
+        })
       })
-      
+
       $(document).on("click", "#deleteGroup", function(event){
         var groupId = $(this).data('id')
         $.ajax({
@@ -259,7 +259,7 @@ html
               "scrollY": "450px",
               "width" : "600px",
               "scrollCollapse": true,
-              "bInfo" : false   
+              "bInfo" : false
             });
             $('.modal').modal('hide');
             $('body').removeClass('modal-open');
@@ -272,8 +272,8 @@ html
           }
         })
       })
-      
-        
+
+
       $(document).on("click", 'a.list-group-item', function(e){
         e.preventDefault();
         var selectedRow = $(this)
@@ -290,35 +290,35 @@ html
               "scrollY": "450px",
               "width" : "600px",
               "scrollCollapse": true,
-              "bInfo" : false   
+              "bInfo" : false
             });
             $('#selectedStudnets').multiSelect({ selectableOptgroup: true });
             $('#MselectedStudnets').multiSelect({ selectableOptgroup: true });
             validate();
-                  
+
             if(groupId){
               $(".active").removeClass("active")
               $("#row"+groupId).addClass("active")
               console.log(groupId);
             }else{
-            $("#total").addClass("active")  
+            $("#total").addClass("active")
             }
 
 
-      
+
           }
         })
       })
-      
-        
-        $(document).on("mouseover", '.tr', function(event) { 
+
+
+        $(document).on("mouseover", '.tr', function(event) {
           var user_id = $(this).data('id');
           $("#"+user_id).css('display', 'block')
         }).on("mouseout", 'tr', function(event){
           var user_id = $(this).data('id');
           $("#"+user_id).css('display', 'none')
         })
-        
+
         $(document).on("click", '.deleteUser', function(event){
           var user_id = $(this).data('id');
           var group_id = $(this).data('group')
@@ -337,19 +337,19 @@ html
                   "scrollY": "450px",
                   "width" : "600px",
                   "scrollCollapse": true,
-                  "bInfo" : false   
+                  "bInfo" : false
                 });
                 if(group_id){
                   $(".active").removeClass("active")
                   $("#row"+group_id).addClass("active")
                   console.log(group_id);
                 }else{
-                $("#total").addClass("active")  
+                $("#total").addClass("active")
                 }
                 $('.modal').modal('hide');
                 $('body').removeClass('modal-open');
                 $('.modal-backdrop').remove();
-                
+
                 $('#selectedStudnets').multiSelect({ selectableOptgroup: true });
                 $('#MselectedStudnets').multiSelect({ selectableOptgroup: true });
                 validate();
@@ -358,8 +358,8 @@ html
             })
           })
         })
-        
-        
+
+
         $(document).ready(function() {
           $.validator.setDefaults({
             errorClass: 'help-block',
@@ -374,12 +374,12 @@ html
                 .removeClass('has-error')
               }
           })
-          
+
           $.validator.addMethod("needsSelection", function (value, element) {
             var count = $(element).find('option:selected').length;
             return count > 0;
           });
-          
+
           $('.valid').each(function(){
           $(this).validate({
               rules: {
@@ -389,11 +389,11 @@ html
                     type : "POST",
                     url: "groupName/check"
                   }
-                  
+
                 },
                 studentId : {
                   needsSelection : true
-                }              
+                }
               },
               messages : {
                 groupName : {
@@ -407,17 +407,8 @@ html
             });
           });
         });
-        
+
         $(document).on('change', '.multiSel', function(){
           console.log('hello-change');
           $(this).valid()
         })
-        
-          
-
-
-
-        
-
-              
-                
