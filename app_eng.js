@@ -111,6 +111,7 @@ app.use('/problem_file',express.static('problem_file'));
 app.use('/javascript',express.static('javascript'));
 app.use('/css',express.static('css'));
 app.use('/multi-select',express.static('multi-select'));
+app.use('/bootstrap-datetimepicker-master', express.static('bootstrap-datetimepicker-master'))
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -304,6 +305,7 @@ app.get('/successPort', function(req, res) {
   })
 });
 
+// 로그인 실패
 app.get('/failPort',function(req, res){
   res.end('fail')
 })
@@ -313,6 +315,8 @@ app.get('/auth', function(req, res){
   res.render('auth')
 })
 
+
+//회원가입시 시리얼 넘버 유무 확인
 app.post('/auth', function(req, res){
   var serialNumber = req.body.serialNumber
   var sql = 'select * from serial where serial_number = ?'
@@ -333,7 +337,7 @@ app.post('/auth', function(req, res){
 })
 
 
-
+//회원가입 화면
 app.get('/signup/:id', function(req, res){
   var serial =  req.params.id
 
@@ -360,6 +364,7 @@ app.get('/signup/:id', function(req, res){
   })
 })
 
+//회원가입 쿼리문
 app.post('/signup', function(req, res){
   if(req.body.roleId==2){
     var personal_id = req.body.grade+"학년"+req.body.classroom+"반"+req.body.number+"번"
@@ -515,6 +520,8 @@ app.post('/signup', function(req, res){
     })
   })
 })
+
+
 
 app.get('/group/:id', function(req,res){
   var groupId = req.params.id;
@@ -749,7 +756,7 @@ app.post("/groupName/check", function(req, res){
       console.log(err);
       res.status(500).send('Internal Server Error')
     }else{
-      var checkGroup = "select * from user_group where teacher_id =? and name = ?"
+      var checkGroup = "select * from user_group where teacher_id =? and group_name = ?"
       conn.query(checkGroup, [user[0].user_id, req.body.groupName], function(err, existedGroup){
         if(err){
           console.log(err);
@@ -1598,25 +1605,50 @@ app.post('/reading/exam/problem/:id/delete', function(req, res){
 
 })
 
+app.get('/publish/scope/:id', function(req, res){
+  var examId =  req.params.id
+  var getTakenGroup = "select ug.*, u.user_id,u.name, u.personal_id from user_group as ug inner join user_group_user as ugu on ug.`user_group_id` = ugu.user_group_id inner join user as u on u.user_id = ugu.`user_id` where ug.teacher_id = ?"
+  conn.query(getTakenGroup, USER.user_id, function(err, takenGroups){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      res.render('publish_scope', {takenGroups: takenGroups, examId :examId});
+    }
+  })
+
+
+})
 
 // 리딩시험 리스트
 app.get('/reading/exam', function(req, res){
-  var  sql= 'select * from r_exam where teacher_id = ?'
+  var  sql= 'select * from r_exam where teacher_id = ? and deleted IS NULL'
   conn.query(sql, USER.user_id, function(err, r_exams){
     if(err){
       console.log(err);
       res.status(500).send('Internal Server Error');
     }else{
-      res.render('reading_exam', {r_exams:r_exams});
+      var getPublishedExam = "select * from r_published_statistic where publisher_id = ? and deleted IS NULL"
+      conn.query(getPublishedExam, [USER.user_id], function(err, published_Exams){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          res.render('reading_exam', {r_exams:r_exams, published_Exams : published_Exams});
+
+        }
+      })
     }
   })
 })
+
+
 
 // 리딩시험 삭제
 app.post('/reading/exam/drop', function(req, res){
   var examId= req.body.examId
   console.log(examId);
-  var sql = 'delete from r_exam where r_exam_id = ?'
+  var sql = 'update r_exam set deleted = CURRENT_TIMESTAMP where r_exam_id =?'
   conn.query(sql, [examId], function(err, rows){
     if(err){
       console.log(err);
@@ -1642,6 +1674,145 @@ app.post('/reading/exam/name', function(req,res){
   })
 })
 
+
+app.post('/reading/exam/publish/:id', function(req, res){
+  var examId = req.params.id;
+  var takingStudents = req.body.takingStudent;
+  var startDate = req.body.start_date;
+  var duration = req.body.duration;
+  var dueDate = req.body.due_date;
+  var getExam = 'select * from r_exam where r_exam_id = ?'
+  conn.query(getExam, examId, function(err, exam){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      var getProblems = "select q.* from r_question as q inner join r_exam_question as eq on q.r_question_id = eq.r_question_id and eq.`r_exam_id` = ?"
+      conn.query(getProblems, examId, function(err, problems){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          var createStat = 'insert into r_published_statistic (name, r_exam_id ,publisher_id, start_date, due_date, total_students, duration, total_questions) VALUES(?,?,?,?,?,?,?,?)'
+          conn.query(createStat, [exam[0].r_exam_name, exam[0].r_exam_id ,USER.user_id, startDate, dueDate, takingStudents.length,duration ,problems.length], function(err, createdStat){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error');
+            }else{
+              var createExam = 'insert into r_published_exam (exam_name,publisher_id,start_date,due_date,statistic_id, duration) VALUES(?,?,?,?,?,?)'
+              conn.query(createExam, [exam[0].r_exam_name, USER.user_id, startDate, dueDate, createdStat.insertId, duration], function(err, createdExam){
+                if(err){
+                  console.log(err);
+                  res.status(500).send('Internal Server Error');
+                }else{
+                  var toStudents = "insert into r_student_exam (published_exam_id, student_id) VALUES(?,?)"
+                  for(var i =0; i<takingStudents.length; i++){
+                    conn.query(toStudents, [createdExam.insertId, takingStudents[i].substring(0, takingStudents[i].indexOf("/"))], function(err, result){
+                      if(err){
+                        console.log(err);
+                        res.status(500).send('Internal Server Error');
+                      }else{
+                        return;
+                      }
+                    })
+                  }
+                  var createProblems = "insert into r_published_exam_problem (published_exam_id, r_question_id,topic,text,asw1,asw2,asw3,asw4,asw5,solution) VALUES(?,?,?,?,?,?,?,?,?,?) "
+                  for(var i=0; i<problems.length; i++){
+                    conn.query(createProblems, [createdExam.insertId, problems[i].r_question_id, problems[i].r_question_topic,problems[i].r_question_text, problems[i].r_question_asw1, problems[i].r_question_asw2, problems[i].r_question_asw3, problems[i].r_question_asw4, problems[i].r_question_asw5, problems[i].r_question_solution],function(err, rows){
+                      if(err){
+                        console.log(err);
+                        res.status(500).send('Internal Server Error');
+                      }else{
+                        return;
+                      }
+                    })
+                  }
+                  var updateCount = "update r_exam set published_count = ? where r_exam_id =?"
+                  conn.query(updateCount, [exam[0].published_count+1,exam[0].r_exam_id], function(err, row){
+                    if(err){
+                      console.log(err);
+                      res.status(500).send('Internal Server Error');
+                    }else{
+                      res.redirect('/reading/exam')
+
+                    }
+                  })
+                }
+              })
+            }
+          })
+
+        }
+      })
+    }
+  })
+})
+
+app.post('/reading/delete/published/:id', function(req, res){
+  var publishedExamId = req.params.id;
+  var deletePublished = "update r_published_statistic set deleted = CURRENT_TIMESTAMP where id = ?"
+  conn.query(deletePublished, publishedExamId, function(err, rows){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      res.redirect('/reading/exam')
+    }
+  })
+
+})
+
+app.get('/reading/exam/result/:id', function(req,res){
+  var publishedStatId = req.params.id;
+  var getExam = "select * from r_published_exam where statistic_id = ?"
+  conn.query(getExam, publishedStatId, function(err, publishedExams){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      var getTakingStudents = "select se.*, pe.retake, u.name, u.personal_id from `r_student_exam` as se inner join `r_published_exam` as pe on se.`published_exam_id` = pe.`id` and pe.`statistic_id` = ? inner join user as u on se.`student_id` = u.user_id"
+      conn.query(getTakingStudents, publishedStatId, function(err, students){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+         res.render('reading_exam_result',{publishedExams :publishedExams, students: students})
+        }
+      })
+
+    }
+  })
+})
+
+
+app.get('/student/reading/exam', function(req,res){
+  var willPub = "select rpe.*, u.name, rps.`total_questions` from r_published_exam as rpe inner join r_student_exam as rse on rpe.`id` = rse.`published_exam_id` and rse.student_id = ? and rpe.`start_date` > CURRENT_TIMESTAMP inner join user as u on rpe.`publisher_id` = u.user_id inner join r_published_statistic as rps on rps.`id`= rpe.`statistic_id`"
+  conn.query(willPub, USER.user_id, function(err, willPubs){
+    if(err){
+      console.log(err);
+      res.status(500).send('Internal Server Error');
+    }else{
+      var Published = "select rpe.*, rps.total_questions,u.name from r_published_exam as rpe inner join r_student_exam as rse on rpe.`id` = rse.`published_exam_id` and rse.student_id = ? and rpe.`start_date` < CURRENT_TIMESTAMP and rpe.`due_date` > CURRENT_TIMESTAMP and rse.`solved` IS NULL inner join user as u on rpe.`publisher_id` = u.user_id inner join r_published_statistic as rps on rpe.`statistic_id` = rps.`id`"
+      conn.query(Published, USER.user_id, function(err, publishedExams){
+        if(err){
+          console.log(err);
+          res.status(500).send('Internal Server Error');
+        }else{
+          var solvedExams = "select rse.score,rse.solved,rpe.*, u.name from r_published_exam as rpe inner join r_student_exam as rse on rpe.`id` = rse.`published_exam_id` and rse.student_id = ? and   rse.`solved` IS NOT NULL inner join user as u on rpe.`publisher_id` = u.user_id"
+          conn.query(solvedExams, USER.user_id, function(err, solvedExams){
+            if(err){
+              console.log(err);
+              res.status(500).send('Internal Server Error');
+            }else{
+              res.render('student_reading_exam', {willPubs:willPubs, publishedExams:publishedExams, solvedExams :solvedExams})
+            }
+          })
+        }
+      })
+    }
+  })
+
+})
 
 //문제셋의 이름, 오디오파일 넣는 화면 라우팅
 app.get('/listening/set/new', function(req, res){

@@ -11,51 +11,128 @@ html
     link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
     link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
     
+    
+    link(href="/multi-select/css/multi-select.css" rel="stylesheet" type="text/css")
+    script(src="/multi-select/js/jquery.multi-select.js")  
+    
     //bootstrap
     link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
     script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+  
+    
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js")
+    script(src="/bootstrap-datetimepicker-master/src/js/bootstrap-datetimepicker.js")
+    link(rel="stylesheet" href ="/bootstrap-datetimepicker-master/build/css/bootstrap-datetimepicker.min.css")
     
     body
       include ./header.jade
       div(class="alert alert-success" id="delete-alert")
         strong  시험이 성공적으로 삭제됬습니다. 
       div(class="well well-lg")
-        table(id="table" class="display nowrap" cellspacing="0" width="100%")
-          thead
-            tr
-              th 
-              th 시험 설명
-              th 문제 갯수  
-              th 출시 
-              th action
-          tfoot
-            tr
-              th
-                button(class="btn btn-info btn-sm" style="float: right;" id ="makeExam") 시험생성     
-          tbody(class ="showBtn")
-            - var n = 1  
-            each r_exam in r_exams
+        div(class="well" style="background-color: white;")
+          table(id="table" class="display nowrap" cellspacing="0" width="100%")
+            thead
               tr
-                td=n++
-                td=r_exam.r_exam_name
-                td=r_exam.r_exam_count
-                td=r_exam.r_exam_date
-                td
-                  button(class="btn-sm btn-danger" class="dbutton" data-toggle="modal" data-target="#myModal" data-id=r_exam.r_exam_id) 삭제
-                  div(id="myModal" class="modal fade" role="dialog")
-                    div(class="modal-dialog")
-                      div(class="modal-content")
-                        div(class="modal-header")
-                          button(type="button" class="close" data-dismiss="modal") &times;
-                          h4(class="modal-title") 시험 삭제      
-                        div(class="modal-body")
-                          p 시험을 삭제하시겠습니까?    
-                        div(class="modal-footer")
-                          button(type="button"  data-dismiss="modal") 취소
-                          button(type="button"  id = "dele" data-dismiss="modal" ) 삭제
-                  a(href='/reading/exam/'+r_exam.r_exam_id+'/problem') 
-                    button(type="button" class="btn btn-primary btn-sm modiPro") 수정
-                  button(type="button" class="btn btn-success btn-sm deletePro") 배포         
+                th 
+                th 시험 설명
+                th 문제 갯수  
+                th 생성 일자
+                th 출시 횟수 
+                th action
+            tfoot
+              tr
+                th
+                  button(class="btn btn-info btn-sm" style="float: right;" id ="makeExam") 시험생성     
+            tbody(class ="showBtn")
+              - var n = 1  
+              each r_exam in r_exams
+                tr
+                  td=n++
+                  td=r_exam.r_exam_name
+                  td=r_exam.r_exam_count
+                  td=r_exam.r_exam_date
+                  td=r_exam.published_count
+                  td
+                    button(class="btn-sm btn-danger" class="dbutton" data-toggle="modal" data-target="#myModal" data-id=r_exam.r_exam_id) 삭제
+                    div(id="myModal" class="modal fade" role="dialog")
+                      div(class="modal-dialog modal-lg")
+                        div(class="modal-content")
+                          div(class="modal-header")
+                            button(type="button" class="close" data-dismiss="modal") &times;
+                            h4(class="modal-title") 시험 삭제      
+                          div(class="modal-body")
+                            p 시험을 삭제하시겠습니까?    
+                          div(class="modal-footer")
+                            button(type="button"  data-dismiss="modal") 취소
+                            button(type="button"  id = "dele" data-dismiss="modal" ) 삭제
+                    a(href='/reading/exam/'+r_exam.r_exam_id+'/problem') 
+                      button(type="button" class="btn btn-primary btn-sm modiPro") 수정
+                    button(type="button" class="btn btn-success btn-sm pub" data-id =r_exam.r_exam_id  data-toggle="modal" data-target="#scopeModal"+r_exam.r_exam_id) 배포
+                    div(id="scopeModal"+r_exam.r_exam_id class="modal fade" role="dialog")
+                      div(class="modal-dialog")
+                        div(class="modal-content")
+                          div(class="modal-header")
+                            button(type="button" class="close" data-dismiss="modal") &times;
+                            h4(class="modal-title") 문제 배포      
+                          div(class="modal-body" id="modalBody"+r_exam.r_exam_id)
+                            form(role = 'form' method ="POST" id ="publish"+r_exam.r_exam_id)
+                              div(class="form-group")
+                                label 시작 시간
+                                div(class='input-group date' id='datetimepicker'+r_exam.r_exam_id )
+                                  input(type='text' data-format="yyyy-MM-dd hh:mm:ss" class="form-control" name ="start_date")
+                                  span(class="input-group-addon")
+                                    span(class="glyphicon glyphicon-calendar")
+                              div(class="form-group")
+                                label 마감 시간
+                                div(class='input-group date' id='datetime'+r_exam.r_exam_id )
+                                  input(type='text' class="form-control" data-format="yyyy-MM-dd hh:mm:ss" name = "due_date")
+                                  span(class="input-group-addon")
+                                    span(class="glyphicon glyphicon-calendar")
+                              div(class="form-group")
+                                label 시험 시간
+                                input(type="number" class="form-control" placeholder ="시험시간을 입력해주세요 (단위: 분)" min="1" name ="duration")
+                          div(class="modal-footer")
+                            button(type="button"  data-dismiss="modal") 취소
+                            button(type="button"  id ="publishConfirm"+r_exam.r_exam_id) 삭제  
+        div(class="well" style="background-color: white;")
+          table(id="etable" class="display nowrap" cellspacing="0" width="100%")
+            thead
+              tr
+                th 시험 이름
+                th 시작 시간 
+                th 마감 시간
+                th 시험 시간
+                th 문제 갯수
+                th 응시 현황
+                th 평 균 
+                th action
+  
+            tbody(class ="showBtn")
+              - var n = 1  
+              each publishedExam in published_Exams
+                tr
+                  td=publishedExam.name
+                  td=publishedExam.start_date
+                  td=publishedExam.due_date
+                  td=publishedExam.duration+"분"
+                  td=publishedExam.total_questions
+                  td=publishedExam.total_students+"("+publishedExam.finished_students+")"
+                  td=publishedExam.average
+                  td                  
+                    button(class="btn-sm btn-danger" class="deletePublished" data-toggle="modal" data-target="#publishedExam"+publishedExam.id data-id=publishedExam.id) 삭제
+                    div(id="publishedExam"+publishedExam.id class="modal fade" role="dialog")
+                      div(class="modal-dialog modal-lg")
+                        div(class="modal-content")
+                          div(class="modal-header")
+                            button(type="button" class="close" data-dismiss="modal") &times;
+                            h4(class="modal-title") 시험 삭제      
+                          div(class="modal-body")
+                            p=publishedExam.name + "를 삭제하시겠습니까?"    
+                          div(class="modal-footer")
+                            button(type="button"  data-dismiss="modal") 취소
+                            button(type="button"  id = "delePub"+publishedExam.id data-dismiss="modal" ) 삭제
+                    a(href="/reading/exam/result/"+publishedExam.id)
+                      button(type="button" class="btn btn-success btn-sm") 결과 확인            
       script.
         //시험 데이터 테이블 구상
         $(document).ready(function () {
@@ -67,6 +144,68 @@ html
           
               
           });
+          var table = $('#etable').DataTable({
+            "scrollY": "250px",
+            "scrollCollapse": true,
+            "paging": false, 
+            "bInfo" : false
+            
+                
+            });  
+          
+    
+          $(".pub").on('click',function(){
+            var examId = $(this).data('id');
+            $('#datetimepicker'+examId).datetimepicker({
+              minDate: moment(),
+              format: 'YYYY-MM-DD HH:mm:ss'
+
+            });
+             $('#datetime'+examId).datetimepicker({useCurrent: false, minDate: moment(), format: 'YYYY-MM-DD HH:mm:ss' });
+             $("#datetimepicker"+examId).on("dp.change", function (e) {
+             $('#datetime'+examId).data("DateTimePicker").minDate(e.date);
+            });
+            $("#datetime"+examId).on("dp.change", function (e) {
+              $('#datetimepicker'+examId).data("DateTimePicker").maxDate(e.date);
+            });
+            if($("#scopeM"+examId).length == 0){
+              $.ajax({
+                type : "GET",
+                url : "/publish/scope/"+examId,
+                success : function(data){
+                  var $dom = $(document.createElement("html"));
+                  $dom[0].innerHTML = data;
+                  var body = $dom.find("div");
+                  $("#publish"+examId).append(body[0].innerHTML);
+                  $('#scopeM'+examId).multiSelect({ selectableOptgroup: true });
+                }
+              })
+            }
+
+            $("#publishConfirm"+examId).on('click',function(){
+              $("#publish"+examId).submit();
+            })
+            
+            $('#publish'+examId).on('submit', function(e){
+              e.preventDefault();
+              var url = "/reading/exam/publish/"+examId
+              $.ajax({
+                type : "POST",
+                data : $("#publish"+examId).serialize(),
+                url : url,
+                success : function(data){
+                  var $dom = $(document.createElement("html"));
+                  $dom[0].innerHTML = data;
+                  var readingView = $dom.find("body");
+                  $('body').html(readingView[0].innerHTML);
+                  $('.modal').modal('hide');
+                  $('body').removeClass('modal-open');
+                  $('.modal-backdrop').remove();
+                }
+              })
+            })
+            
+          })
           
           //리딩시험 생성 하고 insertid 제이슨 파일로 받아서 해당시험관리 화면으로 이동
           $(document).on('click', "#makeExam", function(){
@@ -83,6 +222,26 @@ html
               })
             
           })
+          
+          $(".deletePublished").on('click', function(){
+            var publishedId = $(this).data('id');
+            $("#delePub"+publishedId).on('click', function(){
+              $.ajax({
+                type: "POST",
+                url: "/reading/delete/published/"+publishedId,
+                success : function(data){
+                  var $dom = $(document.createElement("html"));
+                  $dom[0].innerHTML = data;
+                  var $body = $dom.find("body");
+                  $('body').html($body[0].innerHTML);
+                  $('.modal').modal('hide');
+                  $('body').removeClass('modal-open');
+                  $('.modal-backdrop').remove();
+                }
+              })
+            })    
+          })
+          
           
           //리딩시헝 삭제 하는 함수
           $(document).on("click", ".dbutton", function () {

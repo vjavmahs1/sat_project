@@ -284,14 +284,9 @@ html
           url: '/reading/exam/name',
           data: {examName, examId},
           success: function(data){
-            var $dom = $(document.createElement("html"));
-            $dom[0].innerHTML = data;
+            window.location.href = "/reading/exam";
 
-            var $body = $dom.find("body");
-            $('body').html($body[0].innerHTML);
-            $('.selectpicker').selectpicker('render').selectpicker('refresh');
             
-
           }
         })
         

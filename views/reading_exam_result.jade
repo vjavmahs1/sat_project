@@ -1,0 +1,105 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+  
+    //datatables    
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")   
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    
+  body
+    include ./header.jade
+    div(class="well well-lg")
+      div(class="well" style="background-color: white;")
+        table(id="table" class="display nowrap" cellspacing="0" width="100%")
+          thead
+            tr
+              th 재시험
+              th 패널티(%)
+              th 시작 시간
+              th 마감 시간
+              th 응시 학생 
+              th 평균    
+          tbody
+            - var n = 0  
+            each publishedExam in publishedExams
+              tr
+                if(publishedExam.retake==0)
+                  td 정시
+                else
+                  td=publishedExam.retake+"차"  
+                td=publishedExam.penalty
+                td=publishedExam.start_date
+                td=publishedExam.due_date
+                td=publishedExam.finished_students
+                td=publishedExam.average
+      div(class="well" style="background-color: white;")
+        table(id="etable" class="display nowrap" cellspacing="0" width="100%")
+          thead
+            tr
+              th 이름
+              th 학번
+              th 재시험
+              th 점수
+              th 응시 시간
+              th 상태
+
+
+          tbody(class ="showBtn")
+            - var n = 1  
+            each student in students
+              tr
+                td=student.name
+                td=student.personal_id
+                if(student.retake == 0)
+                  td 정시
+                else
+                  td=student.retake+"차"
+                if(student.score == null)
+                  td 미응시
+                else
+                  td=student.score
+                if(student.solved == null)
+                  td 미응시
+                else
+                  td=student.solved
+                if(student.status =='r')
+                  td 시험 전송 완료
+                if(student.status =='f')
+                  td 응시 완료
+                if(student.status =='p')
+                  td 응시중
+                  
+                                
+            
+
+    script.
+      $(document).ready(function () {
+      var table = $('#table').DataTable({
+        "scrollY": "250px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "bInfo" : false
+        
+            
+        });
+        var table = $('#etable').DataTable({
+          "scrollY": "250px",
+          "scrollCollapse": true,
+          "paging": false, 
+          "bInfo" : false
+          
+              
+          });  
+        })  
+
+
+  

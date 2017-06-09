@@ -37,11 +37,11 @@ html
               a(class="list-group-item active") 전체학생 
                 span(class="badge")=takenStudents.length    
               each group in groups
-                a(class="list-group-item side" href="/group/"+group.user_group_id data-id =group.user_group_id id="row"+group.user_group_id)=group.name
+                a(class="list-group-item side" href="/group/"+group.user_group_id data-id =group.user_group_id id="row"+group.user_group_id)=group.group_name
                   span(class="badge")=group.users
           span(class="pull-right" id = "tableSpan")
             div(class="well well-sm clearfix")
-              h3=group.name
+              h3=group.group_name
               span(class="pull-right")
                 button(class="btn btn-primary" data-target="#modify"+group.user_group_id data-id = group.user_group_id data-toggle="modal") 수정
                 div(id="modify"+group.user_group_id class="modal fade" role="dialog")

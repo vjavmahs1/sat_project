@@ -6,10 +6,36 @@ html
       br  
       label 학생 선택
       select(id='scopeM'+questionId multiple='multiple' class="multiSel")
-        each restTeacher in restTeachers
-          optgroup(label=restTeacher.school_name)
-            option(value=restTeacher.user_id)=restTeacher.name
-        if(sharedTeachers)    
-          each sharedTeacher in sharedTeachers
-            optgroup(label=sharedTeacher.school_name)
-              option(value=sharedTeacher.user_id selected)=sharedTeacher.name
+        script.
+          var i=0;
+          var restTeachers = !{JSON.stringify(restTeachers)};
+          console.log(restTeachers.length);
+          while (i < restTeachers.length){
+            if($('#scopeM'+ !{JSON.stringify(questionId)} +' optgroup[label='+restTeachers[i].school_name+']').html() == null){
+              console.log($('#scopeM'+ !{JSON.stringify(questionId)} +' optgroup[label='+restTeachers[i].school_name+']'));
+            $('#scopeM'+!{JSON.stringify(questionId)}).append('<optgroup label='+restTeachers[i].school_name+'> </optgroup>');
+            $('#scopeM'+!{JSON.stringify(questionId)}+' optgroup[label=' + restTeachers[i].school_name +']').append('<option value ='+ restTeachers[i].user_id+'> '+restTeachers[i].name+ '</option>');
+          }else{
+            $('#scopeM'+!{JSON.stringify(questionId)}+' optgroup[label=' + restTeachers[i].school_name +']').append('<option value ='+ restTeachers[i].user_id+'> '+restTeachers[i].name+ '</option>');
+
+          }
+              i++
+            }
+            
+          if(!{JSON.stringify(sharedTeachers)}){
+            var i =0;
+            var sharedTeachers = !{JSON.stringify(sharedTeachers)}
+            while(i< sharedTeachers.length){
+              if($('#scopeM'+ !{JSON.stringify(questionId)} +' optgroup[label='+sharedTeachers[i].school_name+']').html() == null){
+                $('#scopeM'+!{JSON.stringify(questionId)}).append('<optgroup label='+sharedTeachers[i].school_name+'> </optgroup>');
+                $('#scopeM'+!{JSON.stringify(questionId)}+' optgroup[label=' + sharedTeachers[i].school_name +']').append('<option value ='+ sharedTeachers[i].user_id+' selected> '+sharedTeachers[i].name+ '</option>');
+            }else{
+              $('#scopeM'+!{JSON.stringify(questionId)}+' optgroup[label=' + sharedTeachers[i].school_name +']').append('<option value ='+ sharedTeachers[i].user_id+' selected> '+sharedTeachers[i].name+ '</option>');
+
+            }
+            i++
+
+            }
+          }    
+
+                

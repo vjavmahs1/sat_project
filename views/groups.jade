@@ -70,7 +70,7 @@ html
               a(class="list-group-item active" id="total" href="/groups") 전체학생 
                 span(class="badge")=takenStudents.length    
               each group in groups
-                a(class="list-group-item side" href="/group/"+group.user_group_id data-id =group.user_group_id  id="row"+group.user_group_id)=group.name
+                a(class="list-group-item side" href="/group/"+group.user_group_id data-id =group.user_group_id  id="row"+group.user_group_id)=group.group_name
                   span(class="badge")=group.users
           
           span(class="pull-right" id = "tableSpan")

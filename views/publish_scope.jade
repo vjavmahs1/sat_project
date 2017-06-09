@@ -1,0 +1,21 @@
+doctype html
+html
+  div
+    div(id="selectGroup"+examId)
+      label 학생 선택
+      select(id='scopeM'+examId multiple='multiple' class="multiSel" name = "takingStudent")
+        script.
+          var i=0;
+          var takenGroups = !{JSON.stringify(takenGroups)};
+          console.log(takenGroups.length);
+          while (i < takenGroups.length){
+            if($('#scopeM'+ !{JSON.stringify(examId)} +' optgroup[label='+takenGroups[i].group_name+']').html() == null){
+            $('#scopeM'+!{JSON.stringify(examId)}).append('<optgroup label='+takenGroups[i].group_name+'> </optgroup>');
+            $('#scopeM'+!{JSON.stringify(examId)}+' optgroup[label=' + takenGroups[i].group_name +']').append('<option value ='+ takenGroups[i].user_id+'/'+takenGroups[i].user_group_id+'> '+takenGroups[i].name+ '</option>');
+          }else{
+            $('#scopeM'+!{JSON.stringify(examId)}+' optgroup[label=' + takenGroups[i].group_name +']').append('<option value ='+ takenGroups[i].user_id+'/'+takenGroups[i].user_group_id+'> '+takenGroups[i].name+ '</option>');
+
+          }
+              i++
+          }
+            

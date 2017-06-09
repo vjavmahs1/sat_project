@@ -1,0 +1,127 @@
+doctype html
+html
+  head
+    meta=(charset="utf-8")
+    link(rel='stylesheet' type ='text/css' href='/css/header.style.css')
+    link(rel='stylesheet' type ='text/css' href='/css/listening_set.style.css')
+    script(src="//code.jquery.com/jquery-1.12.3.js")
+    
+    //datatables    
+    script(src= "https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js")   
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css')
+    link(rel='stylesheet' type ='text/css' href='https://cdn.datatables.net/responsive/2.1.0/css/responsive.dataTables.min.css')
+    
+    //bootstrap
+    link(rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+    script(src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js")
+    
+  body
+    include ./header.jade 
+    div(class="well well-lg")
+      div(class="well" style="background-color: white;")
+        table(id="table" class="display nowrap" cellspacing="0" width="100%")
+          thead
+            tr
+              th 출시자
+              th 시험 설명
+              th 시험 출시
+              th 시험 종료  
+              th 문제 갯수
+              th 시험 시간
+              th penalty
+              th 비 고          
+          tbody
+            each willPub in willPubs
+              tr
+                td=willPub.name
+                td=willPub.exam_name
+                td=willPub.start_date
+                td=willPub.due_date
+                td=willPub.total_questions
+                td=willPub.duration
+                td=willPub.penalty
+                if(willPub.retake == 0)
+                  td 정시
+                else
+                  td=willPub.retake+"차 시험"
+      div(class="well" style="background-color: white;")
+        table(id="etable" class="display nowrap" cellspacing="0" width="100%")
+          thead
+            tr
+              th 출시자
+              th 시험 설명
+              th 시험 출시
+              th 시험 종료  
+              th 문제 갯수
+              th 시험 시간
+              th penalty
+              th 비 고
+              th action          
+          tbody
+            each publishedExam in publishedExams
+              tr
+                td=publishedExam.name
+                td=publishedExam.exam_name
+                td=publishedExam.start_date
+                td=publishedExam.due_date
+                td=publishedExam.total_questions
+                td=publishedExam.duration
+                td=publishedExam.penalty
+                if(publishedExam.retake == 0)
+                  td 정시
+                else
+                  td=publishedExam.retake+"차 시험"   
+                td
+                  button(class="btn btn-sm btn-success") 시험보기
+      div(class="well" style="background-color: white;")
+        table(id="atable" class="display nowrap" cellspacing="0" width="100%")
+          thead
+            tr
+              th 출시자
+              th 시험 설명
+              th 문제 갯수
+              th 시험 시간
+              th penalty
+              th 점 수
+              th 비 고
+          tbody
+            each solvedExam in solvedExams
+              tr
+                td=solvedExam.name
+                td=solvedExam.exam_name
+                td=solvedExam.total_questions
+                td=solvedExam.duration
+                td=solvedExam.penalty
+                td=solvedExam.score
+                if(publishedExam.retake == 0)
+                  td 정시
+                else
+                  td=publishedExam.retake+"차 시험"
+                              
+                                    
+    script.
+      $(document).ready(function () {
+      var table = $('#table').DataTable({
+        "scrollY": "250px",
+        "scrollCollapse": true,
+        "paging": false, 
+        "bInfo" : false
+        
+            
+        });
+        var table = $('#etable').DataTable({
+          "scrollY": "250px",
+          "scrollCollapse": true,
+          "paging": false, 
+          "bInfo" : false
+                
+          });
+          
+          var table = $('#atable').DataTable({
+            "scrollY": "250px",
+            "scrollCollapse": true,
+            "paging": false, 
+            "bInfo" : false
+                  
+            });   
+        })  
