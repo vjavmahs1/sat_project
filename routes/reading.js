@@ -9,7 +9,7 @@ module.exports = function(passport){
     host     : 'localhost',
     port     : '3306',
     user     : 'root',
-    password : '900620zZ.',
+    password : '-',
     database : 'eng'
   });
 
